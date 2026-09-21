@@ -1,7 +1,7 @@
 import express from 'express';
 import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import type { ApiErrorResponse } from './schemas/MoviesTypes';
-import { fetchMoviesFromTmdb } from './utils';
+import { fetchGenresFromTmdb, fetchMoviesFromTmdb } from './utils';
 
 // Create a new express application instance
 const app = express();
@@ -76,6 +76,26 @@ app.get(
     }
   },
 );
+
+// Define a route handler for fetching the list of official movie genres,
+// used by the front-end to turn a movie's genre_ids into display names.
+app.get('/api/genres', async (_req: express.Request, res: express.Response) => {
+  try {
+    const queryParams = new URLSearchParams();
+    const { language } = _req.query;
+    queryParams.append('language', (language as string) || DEFAULT_LANGUAGE);
+
+    const data = await fetchGenresFromTmdb(queryParams);
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error fetching genres:', error);
+    const errorResponse: ApiErrorResponse = {
+      error: 'Failed to fetch genres',
+    };
+    res.status(500).json(errorResponse);
+  }
+});
 
 // Define a route handler for health check endpoint
 app.get('/api/health', (_req: express.Request, res: express.Response) => {

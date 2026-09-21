@@ -1,7 +1,9 @@
 import type {
   TmdbMoviesRawResponse,
+  TmdbGenresRawResponse,
   Movie,
   MoviesApiResponse,
+  GenresApiResponse,
 } from './schemas/MoviesTypes';
 import { tmdbAccessToken } from './config';
 
@@ -30,18 +32,17 @@ export const toSupportedMovie = (
 };
 
 /**
- * Calls a TMDB movies endpoint (e.g. 'movie/popular', 'search/movie') with the
- * given query params and returns the response in our application's format.
- * Shared by every route that returns a list of movies, so each route only
- * has to build its own query params.
+ * Calls any TMDB API endpoint with the given query params, using our shared
+ * bearer token, and returns the parsed JSON body. Shared by every route so
+ * each one only has to build its own query params and shape the response.
  * @param endpoint The TMDB API endpoint path, relative to '/3/'.
  * @param params The query params to send to TMDB.
- * @returns The movies response in our application's supported format.
+ * @returns The raw, parsed JSON response body.
  */
-export const fetchMoviesFromTmdb = async (
+const tmdbFetch = async <T>(
   endpoint: string,
   params: URLSearchParams,
-): Promise<MoviesApiResponse> => {
+): Promise<T> => {
   const response = await fetch(
     `https://api.themoviedb.org/3/${endpoint}?${params.toString()}`,
     {
@@ -56,7 +57,23 @@ export const fetchMoviesFromTmdb = async (
     throw new Error(`TMDB API request failed with status ${response.status}`);
   }
 
-  const rawData = (await response.json()) as TmdbMoviesRawResponse;
+  return (await response.json()) as T;
+};
+
+/**
+ * Calls a TMDB movies endpoint (e.g. 'movie/popular', 'search/movie') with the
+ * given query params and returns the response in our application's format.
+ * Shared by every route that returns a list of movies, so each route only
+ * has to build its own query params.
+ * @param endpoint The TMDB API endpoint path, relative to '/3/'.
+ * @param params The query params to send to TMDB.
+ * @returns The movies response in our application's supported format.
+ */
+export const fetchMoviesFromTmdb = async (
+  endpoint: string,
+  params: URLSearchParams,
+): Promise<MoviesApiResponse> => {
+  const rawData = await tmdbFetch<TmdbMoviesRawResponse>(endpoint, params);
 
   return {
     page: rawData.page,
@@ -64,4 +81,21 @@ export const fetchMoviesFromTmdb = async (
     total_pages: rawData.total_pages,
     total_results: rawData.total_results,
   };
+};
+
+/**
+ * Fetches the list of official movie genres from TMDB, used to translate a
+ * movie's genre_ids into display names on the front-end.
+ * @param params The query params to send to TMDB (e.g. language).
+ * @returns The genres response in our application's format.
+ */
+export const fetchGenresFromTmdb = async (
+  params: URLSearchParams,
+): Promise<GenresApiResponse> => {
+  const rawData = await tmdbFetch<TmdbGenresRawResponse>(
+    'genre/movie/list',
+    params,
+  );
+
+  return { genres: rawData.genres };
 };
