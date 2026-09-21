@@ -1,7 +1,9 @@
 /* Hero */
 
 .hero {
-  margin-bottom: 56px;
+  margin-bottom: 40px;
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--border);
 }
 
 .hero__title {
@@ -176,4 +178,12 @@
 .error-state__retry:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 3px;
+}
+
+/* Empty search results */
+
+.empty-state {
+  margin: 0;
+  font-size: 15px;
+  color: var(--text-secondary);
 }
