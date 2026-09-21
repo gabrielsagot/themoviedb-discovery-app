@@ -42,6 +42,7 @@ app.get('/api/movies/popular', async (_req: express.Request, res: express.Respon
     // Send the transformed data as a JSON response
     res.json(data);
   } catch (error) {
+    console.error('Error fetching popular movies:', error);
     const errorResponse: ApiErrorResponse = { error: 'Failed to fetch popular movies' };
     res.status(500).json(errorResponse);
   }

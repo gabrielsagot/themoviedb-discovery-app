@@ -10,9 +10,9 @@ export default function App() {
   const [movies, setMovies] = useState<Movie[] | null>(null)
   const [status, setStatus] = useState<LoadState>("loading")
 
+  // Fetch popular movies. Only touches state from the promise callbacks,
+  // never synchronously, so it stays safe to call from an effect.
   const loadMovies = useCallback(() => {
-    setStatus("loading")
-
     fetch("/api/movies/popular")
       .then(async (response) => {
         if (!response.ok) {
@@ -33,6 +33,12 @@ export default function App() {
   useEffect(() => {
     loadMovies()
   }, [loadMovies])
+
+  // Retry is triggered by a click, so resetting to "loading" here is safe.
+  const handleRetry = () => {
+    setStatus("loading")
+    loadMovies()
+  }
 
   return (
     <main>
@@ -62,7 +68,7 @@ export default function App() {
             Something went wrong while fetching popular movies. Check that the
             server is running and try again.
           </p>
-          <button className="error-state__retry" onClick={loadMovies}>
+          <button className="error-state__retry" onClick={handleRetry}>
             Try again
           </button>
         </div>
