@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { Movie } from '../../back-end/schemas/MoviesTypes';
 import RatingRing from './RatingRing';
@@ -9,20 +9,33 @@ type MovieDetailModalProps = {
   onClose: () => void;
 };
 
-const BACKDROP_BASE_URL = 'https://image.tmdb.org/t/p/w1280';
+const IMAGE_BASE_URL = 'https://image.tmdb.org/t/p';
+const CLOSE_ANIMATION_MS = 180;
 
 const voteCountFormatter = new Intl.NumberFormat('fr-FR');
+const dateFormatter = new Intl.DateTimeFormat('fr-FR', {
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
 
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
 
+const formatReleaseDate = (releaseDate: string) => {
+  if (!releaseDate) return null;
+
+  const parsed = new Date(releaseDate);
+  return Number.isNaN(parsed.getTime()) ? null : dateFormatter.format(parsed);
+};
+
 /**
  * A modal dialog showing full details for a single movie: backdrop image,
- * rating, genres and the complete overview. Handles the accessibility
- * basics a dialog needs on its own: it traps focus while open, closes on
- * Escape or an overlay click, and locks page scroll for as long as it's
- * shown. Returning focus to whatever opened it is the caller's job, since
- * only the caller knows which element that was.
+ * poster, rating, genres and the complete overview. Handles the
+ * accessibility basics a dialog needs on its own: it traps focus while
+ * open, closes on Escape or an overlay click, and locks page scroll for as
+ * long as it's shown. Returning focus to whatever opened it is the
+ * caller's job, since only the caller knows which element that was.
  */
 export default function MovieDetailModal({
   movie,
@@ -30,6 +43,14 @@ export default function MovieDetailModal({
   onClose,
 }: MovieDetailModalProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
+  const [isClosing, setIsClosing] = useState(false);
+
+  // Closing plays a short exit animation first, so the dialog leaves the
+  // way it arrived instead of blinking out.
+  const requestClose = useCallback(() => {
+    setIsClosing(true);
+    window.setTimeout(onClose, CLOSE_ANIMATION_MS);
+  }, [onClose]);
 
   // Move focus into the dialog as soon as it mounts, and lock page scroll
   // for as long as it stays open.
@@ -47,7 +68,7 @@ export default function MovieDetailModal({
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        onClose();
+        requestClose();
         return;
       }
 
@@ -72,22 +93,25 @@ export default function MovieDetailModal({
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+  }, [requestClose]);
 
-  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.target === event.currentTarget) onClose();
+  const handleOverlayMouseDown = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (event.target === event.currentTarget) requestClose();
   };
 
-  const year = movie.release_date ? movie.release_date.slice(0, 4) : null;
+  const releaseDate = formatReleaseDate(movie.release_date);
   const genres = movie.genre_ids
     .map((id) => genreMap?.get(id))
     .filter((name): name is string => Boolean(name));
 
   return createPortal(
-    <div className="modal-overlay" onMouseDown={handleOverlayClick}>
+    <div
+      className={`modal-overlay${isClosing ? ' modal-overlay--closing' : ''}`}
+      onMouseDown={handleOverlayMouseDown}
+    >
       <div
         ref={dialogRef}
-        className="modal"
+        className={`modal${isClosing ? ' modal--closing' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
@@ -97,51 +121,72 @@ export default function MovieDetailModal({
           {movie.backdrop_path ? (
             <img
               className="modal__backdrop"
-              src={`${BACKDROP_BASE_URL}${movie.backdrop_path}`}
+              src={`${IMAGE_BASE_URL}/w1280${movie.backdrop_path}`}
               alt=""
               aria-hidden="true"
             />
           ) : (
-            <div className="modal__backdrop modal__backdrop--placeholder" />
+            <div className="modal__backdrop modal__backdrop--empty" />
           )}
+          <div className="modal__scrim" aria-hidden="true" />
+
           <button
             type="button"
             className="modal__close"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Fermer"
           >
-            ×
+            <svg viewBox="0 0 20 20" fill="none" aria-hidden="true">
+              <path
+                d="M6 6l8 8M14 6l-8 8"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
           </button>
         </div>
 
         <div className="modal__content">
-          <div className="modal__heading">
-            <h2 id="modal-title" className="modal__title">
-              {movie.title}
-            </h2>
+          <div className="modal__head">
+            {movie.poster_path && (
+              <img
+                className="modal__poster"
+                src={`${IMAGE_BASE_URL}/w342${movie.poster_path}`}
+                alt=""
+                aria-hidden="true"
+              />
+            )}
+
+            <div className="modal__headline">
+              <h2 id="modal-title" className="modal__title">
+                {movie.title}
+              </h2>
+              <p className="modal__subline">
+                {releaseDate ?? 'Date de sortie inconnue'}
+                {movie.vote_count > 0 && (
+                  <>
+                    {' · '}
+                    {voteCountFormatter.format(movie.vote_count)} vote
+                    {movie.vote_count !== 1 ? 's' : ''}
+                  </>
+                )}
+              </p>
+            </div>
+
             <RatingRing
               value={movie.vote_average}
               voteCount={movie.vote_count}
-              size={56}
+              size={54}
               strokeWidth={4}
             />
           </div>
 
-          <p className="modal__subline">
-            {year ?? 'Date inconnue'}
-            {movie.vote_count > 0 && (
-              <>
-                {' · '}
-                {voteCountFormatter.format(movie.vote_count)} vote
-                {movie.vote_count !== 1 ? 's' : ''}
-              </>
-            )}
-            {movie.original_title !== movie.title && (
-              <>
-                {' · '}Titre original : {movie.original_title}
-              </>
-            )}
-          </p>
+          {movie.original_title !== movie.title && (
+            <p className="modal__original">
+              Titre original : {movie.original_title}
+            </p>
+          )}
 
           {genres.length > 0 && (
             <ul className="modal__genres">

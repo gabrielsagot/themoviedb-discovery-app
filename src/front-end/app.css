@@ -34,7 +34,7 @@
 .movie-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 40px 24px;
+  gap: 44px 26px;
   list-style: none;
   margin: 0;
   padding: 0;
@@ -44,7 +44,7 @@
 @media (max-width: 640px) {
   .movie-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 28px 16px;
+    gap: 30px 16px;
   }
 }
 
@@ -59,15 +59,21 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
 
+/* Movie card
+   The card itself stays completely flat: all of the hover feedback lives
+   on the poster, which is the only part of the card with a real edge to
+   lift. Nothing moves under the text, so nothing ever looks cramped
+   against a box that isn't there. */
+
 .movie {
-  display: flex;
-  flex-direction: column;
+  display: block;
   width: 100%;
   appearance: none;
   border: none;
@@ -78,56 +84,91 @@
   text-align: left;
   color: inherit;
   cursor: pointer;
-  border-radius: 16px;
-  transition:
-    transform 0.2s ease,
-    box-shadow 0.2s ease;
-}
-
-.movie:hover,
-.movie:focus-visible {
-  transform: translateY(-4px);
-  box-shadow: var(--card-hover-shadow);
 }
 
 .movie:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 4px;
+  outline: none;
 }
 
-.movie:active {
-  transform: translateY(-2px);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .movie {
-    transition: none;
-  }
-
-  .movie:hover,
-  .movie:focus-visible {
-    transform: none;
-  }
-}
-
-.movie__poster-wrap {
+.movie__frame {
   position: relative;
-  margin-bottom: 12px;
+  display: block;
+  aspect-ratio: 2 / 3;
+  margin-bottom: 14px;
+  border-radius: 14px;
+  overflow: hidden;
+  background-color: var(--skeleton);
+  box-shadow: var(--poster-shadow);
+  transition:
+    transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Hairline over the poster, so a bright poster still reads as a distinct
+   object against a bright page. */
+.movie__frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--hairline);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.movie:hover .movie__frame {
+  transform: translateY(-6px);
+  box-shadow: var(--poster-shadow-hover);
+}
+
+.movie:focus-visible .movie__frame {
+  transform: translateY(-6px);
+  box-shadow: var(--poster-shadow-hover);
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.movie:active .movie__frame {
+  transform: translateY(-2px);
 }
 
 .movie__poster {
   display: block;
   width: 100%;
-  aspect-ratio: 2 / 3;
-  border-radius: 12px;
-  background-color: var(--skeleton);
+  height: 100%;
   object-fit: cover;
+  opacity: 0;
+  transition:
+    opacity 0.45s ease,
+    transform 0.55s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.movie__poster--ready {
+  opacity: 1;
+}
+
+.movie:hover .movie__poster,
+.movie:focus-visible .movie__poster {
+  transform: scale(1.045);
+}
+
+.movie__poster--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1;
+  color: var(--text-secondary);
+}
+
+.movie__poster--empty svg {
+  width: 34px;
+  height: 34px;
 }
 
 .movie__badge {
   position: absolute;
-  right: 8px;
-  bottom: 8px;
+  right: 10px;
+  bottom: 10px;
+  display: block;
   border-radius: 50%;
   background: var(--badge-bg);
   backdrop-filter: blur(12px) saturate(160%);
@@ -136,27 +177,46 @@
 }
 
 .movie__title {
-  margin: 0 0 4px;
+  display: block;
+  margin-bottom: 4px;
   font-size: 15px;
   font-weight: 600;
   line-height: 1.3;
 }
 
 .movie__meta {
-  margin: 0 0 8px;
+  display: block;
+  margin-bottom: 8px;
   font-size: 13px;
   color: var(--text-secondary);
 }
 
 .movie__overview {
-  margin: 0;
+  display: -webkit-box;
   font-size: 13px;
   line-height: 1.45;
   color: var(--text-secondary);
-  display: -webkit-box;
   -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .movie__frame,
+  .movie__poster {
+    transition: opacity 0.3s ease;
+  }
+
+  .movie:hover .movie__frame,
+  .movie:focus-visible .movie__frame,
+  .movie:active .movie__frame {
+    transform: none;
+  }
+
+  .movie:hover .movie__poster,
+  .movie:focus-visible .movie__poster {
+    transform: none;
+  }
 }
 
 /* Rating ring */
@@ -166,6 +226,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: none;
 }
 
 .rating-ring__track {
@@ -200,14 +261,47 @@
   color: var(--rating-none);
 }
 
+/* Load more */
+
+.load-more {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  margin-top: 56px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+}
+
+.load-more__count,
+.load-more__done {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.load-more__done {
+  font-size: 15px;
+}
+
+.load-more__error {
+  margin: 0;
+  font-size: 13px;
+  color: var(--rating-low);
+}
+
 /* Loading skeletons */
+
+.movie-skeleton {
+  display: block;
+}
 
 .skeleton-poster {
   width: 100%;
   aspect-ratio: 2 / 3;
-  border-radius: 12px;
+  border-radius: 14px;
   background-color: var(--skeleton);
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   animation: pulse 1.6s ease-in-out infinite;
 }
 
@@ -227,6 +321,7 @@
   100% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 1;
   }
@@ -259,25 +354,19 @@
   color: var(--text-secondary);
 }
 
-.error-state__retry {
-  appearance: none;
-  border: none;
-  background: none;
-  padding: 0;
-  font-size: 15px;
-  font-weight: 500;
-  color: var(--accent);
-  cursor: pointer;
-}
-
-.error-state__retry:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-}
-
 /* Empty search results */
 
 .empty-state {
+  max-width: 34em;
+}
+
+.empty-state__title {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.empty-state__hint {
   margin: 0;
   font-size: 15px;
   color: var(--text-secondary);
@@ -299,6 +388,10 @@
   animation: overlay-in 0.2s ease both;
 }
 
+.modal-overlay--closing {
+  animation: overlay-out 0.18s ease both;
+}
+
 @keyframes overlay-in {
   from {
     opacity: 0;
@@ -309,15 +402,33 @@
   }
 }
 
+@keyframes overlay-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
 .modal {
   width: 100%;
-  max-width: 640px;
-  max-height: min(720px, 90vh);
+  max-width: 620px;
+  max-height: min(760px, 90vh);
   overflow-y: auto;
   border-radius: 18px;
   background: var(--surface);
-  box-shadow: 0 30px 60px rgb(0 0 0 / 30%);
+  box-shadow: var(--modal-shadow);
   animation: modal-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.modal--closing {
+  animation: modal-out 0.18s ease both;
+}
+
+.modal:focus-visible {
+  outline: none;
 }
 
 @keyframes modal-in {
@@ -332,15 +443,25 @@
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .modal-overlay,
-  .modal {
-    animation: none;
+@keyframes modal-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(6px) scale(0.985);
   }
 }
 
-.modal:focus-visible {
-  outline: none;
+@media (prefers-reduced-motion: reduce) {
+  .modal-overlay,
+  .modal-overlay--closing,
+  .modal,
+  .modal--closing {
+    animation: none;
+  }
 }
 
 .modal__media {
@@ -355,25 +476,42 @@
   background-color: var(--skeleton);
 }
 
-.modal__backdrop--placeholder {
-  background: linear-gradient(180deg, var(--skeleton) 0%, var(--surface) 100%);
+.modal__backdrop--empty {
+  aspect-ratio: 16 / 6;
+}
+
+/* Neutral scrim: keeps the poster and close button legible whatever the
+   image underneath happens to be. */
+.modal__scrim {
+  position: absolute;
+  inset: auto 0 0;
+  height: 45%;
+  background: linear-gradient(to bottom, rgb(0 0 0 / 0%), rgb(0 0 0 / 16%));
+  pointer-events: none;
 }
 
 .modal__close {
   position: absolute;
   top: 12px;
   right: 12px;
-  width: 34px;
-  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
   border: none;
   border-radius: 50%;
   background: var(--badge-bg);
   backdrop-filter: blur(12px) saturate(160%);
   -webkit-backdrop-filter: blur(12px) saturate(160%);
   color: var(--text);
-  font-size: 20px;
-  line-height: 1;
   cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.modal__close svg {
+  width: 18px;
+  height: 18px;
 }
 
 .modal__close:hover {
@@ -386,28 +524,48 @@
 }
 
 .modal__content {
-  padding: 28px 32px 32px;
+  padding: 20px 30px 32px;
 }
 
-.modal__heading {
+.modal__head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 6px;
+  align-items: flex-end;
+  gap: 18px;
+  margin-bottom: 14px;
+}
+
+.modal__poster {
+  flex: none;
+  width: 104px;
+  margin-top: -62px;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 30%);
+  outline: 1px solid var(--hairline);
+  outline-offset: -1px;
+}
+
+.modal__headline {
+  flex: 1;
+  min-width: 0;
 }
 
 .modal__title {
-  margin: 0;
-  font-size: 26px;
+  margin: 0 0 5px;
+  font-size: 25px;
   font-weight: 600;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
 }
 
 .modal__subline {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.modal__original {
   margin: 0 0 16px;
-  font-size: 14px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
@@ -434,4 +592,46 @@
   font-size: 15px;
   line-height: 1.6;
   color: var(--text);
+}
+
+@media (max-width: 640px) {
+  .modal-overlay {
+    padding: 16px;
+  }
+
+  .modal__content {
+    padding: 18px 22px 26px;
+  }
+
+  /* At phone width the poster, title and rating ring can't share one
+     row without squeezing the title, so the title block wraps under
+     them and takes the full width. */
+  .modal__head {
+    flex-wrap: wrap;
+    gap: 14px;
+    row-gap: 12px;
+  }
+
+  .modal__poster {
+    order: 1;
+  }
+
+  .modal__head > .rating-ring {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .modal__headline {
+    order: 3;
+    flex: 0 0 100%;
+  }
+
+  .modal__poster {
+    width: 78px;
+    margin-top: -44px;
+  }
+
+  .modal__title {
+    font-size: 21px;
+  }
 }

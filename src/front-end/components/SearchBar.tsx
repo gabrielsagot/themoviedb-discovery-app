@@ -8,6 +8,8 @@ const DEBOUNCE_MS = 350;
 
 export default function SearchBar({ onSearch }: SearchBarProps) {
   const [value, setValue] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // The debounce timer lives in a ref, started from the change/clear event
   // handlers below (a real user action), never from an effect. That's what
@@ -17,6 +19,28 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
   // Clear any pending debounce timer if the component unmounts mid-wait.
   useEffect(() => {
     return () => window.clearTimeout(timeoutRef.current);
+  }, []);
+
+  // "/" jumps straight to the search field, the way it does in most tools
+  // people already use — unless they're currently typing somewhere else.
+  useEffect(() => {
+    const handleShortcut = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.metaKey || event.ctrlKey) return;
+
+      const target = event.target as HTMLElement | null;
+      const isTyping =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable === true;
+
+      if (isTyping) return;
+
+      event.preventDefault();
+      inputRef.current?.focus();
+    };
+
+    document.addEventListener('keydown', handleShortcut);
+    return () => document.removeEventListener('keydown', handleShortcut);
   }, []);
 
   const scheduleSearch = (newValue: string) => {
@@ -36,10 +60,23 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
     setValue('');
     window.clearTimeout(timeoutRef.current);
     onSearch('');
+    inputRef.current?.focus();
+  };
+
+  // Escape clears the field when there's something in it, and steps out of
+  // the search altogether when there isn't.
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key !== 'Escape') return;
+
+    if (value) {
+      handleClear();
+    } else {
+      inputRef.current?.blur();
+    }
   };
 
   return (
-    <div className="search">
+    <div className={`search${isFocused ? ' search--focused' : ''}`}>
       <svg
         className="search__icon"
         viewBox="0 0 20 20"
@@ -57,15 +94,22 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
           strokeLinecap="round"
         />
       </svg>
+
       <input
+        ref={inputRef}
         type="search"
         className="search__input"
         placeholder="Rechercher un film"
         aria-label="Rechercher un film"
+        aria-keyshortcuts="/"
         value={value}
         onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
       />
-      {value && (
+
+      {value ? (
         <button
           type="button"
           className="search__clear"
@@ -74,6 +118,12 @@ export default function SearchBar({ onSearch }: SearchBarProps) {
         >
           ×
         </button>
+      ) : (
+        !isFocused && (
+          <kbd className="search__hint" aria-hidden="true">
+            /
+          </kbd>
+        )
       )}
     </div>
   );
