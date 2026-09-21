@@ -39,3 +39,19 @@ export type Movie = Omit<TmdbMovie, 'adult' | 'video'>;
 export type ApiErrorResponse = {
   error: string;
 };
+
+// TypeScript type for a single movie genre, as returned by TMDB's genre list endpoint.
+export type Genre = {
+  id: number;
+  name: string;
+};
+
+// TypeScript type for the raw response from the TMDB API for the movie genre list.
+export type TmdbGenresRawResponse = {
+  genres: Genre[];
+};
+
+// TypeScript type for the API response when fetching the genre list.
+export type GenresApiResponse = {
+  genres: Genre[];
+};
