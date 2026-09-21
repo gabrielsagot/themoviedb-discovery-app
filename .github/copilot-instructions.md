@@ -1,21 +1,8 @@
-## Commit Message Guidelines
+# Instructions pour GitHub Copilot
 
-Commit messages should use the conventional commit format. For example:
+## Conventions de commit
 
-```
-feat: add new feature
-fix: fix a bug
-docs: update documentation
-style: update styles
-refactor: refactor code
-test: add tests
-chore: update dependencies
-build: update build process
-ci: update continuous integration
-perf: improve performance
-revert: revert to previous commit
-```
-
-The commit message should be in the imperative mood, meaning it should describe what the commit does, not what it did.
-
-The commit message should be concise and to the point, ideally no more than 72 characters in length. If the commit message
+- Utiliser la convention de commit "Conventional Commits".
+- Types autorisés : feat, fix, docs, style, refactor, test, chore.
+- Format : `<type>: <message en anglais>`.
+- Exemple : "feat: add new feature to the application"
