@@ -4,18 +4,18 @@ type MovieItemProps = {
   movie: Movie;
 };
 
-const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w500';
+const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w185';
 
 export default function MovieItem({ movie }: MovieItemProps) {
   const year = movie.release_date ? movie.release_date.slice(0, 4) : '—';
 
   return (
-    <li className="movie">
+    <div className="movie">
       {movie.poster_path ? (
         <img
           className="movie__poster"
           src={`${POSTER_BASE_URL}${movie.poster_path}`}
-          alt={movie.title}
+          alt={`Affiche de ${movie.title}`}
           loading="lazy"
         />
       ) : (
@@ -27,6 +27,6 @@ export default function MovieItem({ movie }: MovieItemProps) {
         <span>{movie.vote_average.toFixed(1)}</span>
       </p>
       <p className="movie__overview">{movie.overview}</p>
-    </li>
+    </div>
   );
 }
