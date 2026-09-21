@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import type { Movie } from '../back-end/schemas/MoviesTypes';
+import {
+  DEFAULT_LANGUAGE,
+  DEFAULT_PAGE,
+  DEFAULT_REGION,
+} from '../back-end/constants';
 import MovieItem from './components/MovieItem';
 import './index.css';
 
@@ -13,7 +18,15 @@ export default function App() {
   // Fetch popular movies. Only touches state from the promise callbacks,
   // never synchronously, so it stays safe to call from an effect.
   const loadMovies = useCallback(() => {
-    fetch('/api/movies/popular')
+    // read parameters from the URL query string
+    const queryParams = new URLSearchParams(window.location.search);
+    const language = queryParams.get('language') || DEFAULT_LANGUAGE;
+    const page = queryParams.get('page') || DEFAULT_PAGE;
+    const region = queryParams.get('region') || DEFAULT_REGION;
+
+    fetch(
+      `/api/movies/popular?language=${language}&page=${page}&region=${region}`,
+    )
       .then(async (response) => {
         if (!response.ok) {
           throw new Error('Failed to fetch popular movies');
