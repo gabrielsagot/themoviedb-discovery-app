@@ -1,44 +1,44 @@
-import { useCallback, useEffect, useState } from "react"
-import type { Movie } from "../back-end/schemas/MoviesTypes"
-import MovieItem from "./components/MovieItem"
-import "./index.css"
+import { useCallback, useEffect, useState } from 'react';
+import type { Movie } from '../back-end/schemas/MoviesTypes';
+import MovieItem from './components/MovieItem';
+import './index.css';
 
-type LoadState = "loading" | "loaded" | "error"
+type LoadState = 'loading' | 'loaded' | 'error';
 
 export default function App() {
   // State to hold the fetched movies data, initialized to null
-  const [movies, setMovies] = useState<Movie[] | null>(null)
-  const [status, setStatus] = useState<LoadState>("loading")
+  const [movies, setMovies] = useState<Movie[] | null>(null);
+  const [status, setStatus] = useState<LoadState>('loading');
 
   // Fetch popular movies. Only touches state from the promise callbacks,
   // never synchronously, so it stays safe to call from an effect.
   const loadMovies = useCallback(() => {
-    fetch("/api/movies/popular")
+    fetch('/api/movies/popular')
       .then(async (response) => {
         if (!response.ok) {
-          throw new Error("Failed to fetch popular movies")
+          throw new Error('Failed to fetch popular movies');
         }
-        return response.json()
+        return response.json();
       })
       .then((data) => {
-        setMovies(data.results)
-        setStatus("loaded")
+        setMovies(data.results);
+        setStatus('loaded');
       })
       .catch(() => {
-        setStatus("error")
-      })
-  }, [])
+        setStatus('error');
+      });
+  }, []);
 
   // useEffect hook to fetch data from an API when the component mounts
   useEffect(() => {
-    loadMovies()
-  }, [loadMovies])
+    loadMovies();
+  }, [loadMovies]);
 
   // Retry is triggered by a click, so resetting to "loading" here is safe.
   const handleRetry = () => {
-    setStatus("loading")
-    loadMovies()
-  }
+    setStatus('loading');
+    loadMovies();
+  };
 
   return (
     <main>
@@ -49,19 +49,23 @@ export default function App() {
         </p>
       </header>
 
-      {status === "loading" && (
-        <ul className="movie-grid" aria-busy="true" aria-label="Loading popular movies">
+      {status === 'loading' && (
+        <ul
+          className="movie-grid"
+          aria-busy="true"
+          aria-label="Loading popular movies"
+        >
           {Array.from({ length: 10 }).map((_, index) => (
             <li className="movie" key={index}>
               <div className="skeleton-poster" />
-              <div className="skeleton-line" style={{ width: "80%" }} />
-              <div className="skeleton-line" style={{ width: "40%" }} />
+              <div className="skeleton-line" style={{ width: '80%' }} />
+              <div className="skeleton-line" style={{ width: '40%' }} />
             </li>
           ))}
         </ul>
       )}
 
-      {status === "error" && (
+      {status === 'error' && (
         <div className="error-state">
           <h2 className="error-state__title">Movies couldn't be loaded</h2>
           <p className="error-state__message">
@@ -74,7 +78,7 @@ export default function App() {
         </div>
       )}
 
-      {status === "loaded" && movies && (
+      {status === 'loaded' && movies && (
         <ul className="movie-grid">
           {movies.map((movie) => (
             <MovieItem key={movie.id} movie={movie} />
@@ -82,5 +86,5 @@ export default function App() {
         </ul>
       )}
     </main>
-  )
+  );
 }

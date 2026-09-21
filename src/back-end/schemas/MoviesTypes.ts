@@ -21,7 +21,7 @@ export type TmdbMovie = {
   title: string;
   video: boolean;
   vote_average: number;
-  vote_count: number
+  vote_count: number;
 };
 
 // TypeScript type for the API response when fetching movies, containing an array of supported Movie objects.

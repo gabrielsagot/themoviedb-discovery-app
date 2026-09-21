@@ -1,13 +1,13 @@
-import type { Movie } from "../../back-end/schemas/MoviesTypes"
+import type { Movie } from '../../back-end/schemas/MoviesTypes';
 
 type MovieItemProps = {
-  movie: Movie
-}
+  movie: Movie;
+};
 
-const POSTER_BASE_URL = "https://image.tmdb.org/t/p/w500"
+const POSTER_BASE_URL = 'https://image.tmdb.org/t/p/w500';
 
 export default function MovieItem({ movie }: MovieItemProps) {
-  const year = movie.release_date ? movie.release_date.slice(0, 4) : "—"
+  const year = movie.release_date ? movie.release_date.slice(0, 4) : '—';
 
   return (
     <li className="movie">
@@ -28,5 +28,5 @@ export default function MovieItem({ movie }: MovieItemProps) {
       </p>
       <p className="movie__overview">{movie.overview}</p>
     </li>
-  )
+  );
 }
