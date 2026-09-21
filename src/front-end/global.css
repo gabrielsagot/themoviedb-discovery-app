@@ -1,22 +1,43 @@
 :root {
   --bg: #fbfbfd;
+  --surface: #ffffff;
   --text: #1d1d1f;
   --text-secondary: #6e6e73;
   --border: #d2d2d7;
   --accent: #0071e3;
   --skeleton: #e8e8ed;
   --topbar-bg: rgb(251 251 253 / 72%);
+  --badge-bg: rgb(255 255 255 / 82%);
+  --overlay-bg: rgb(0 0 0 / 40%);
+
+  --rating-good: #1a9e5a;
+  --rating-mid: #c8790a;
+  --rating-low: #d93a2b;
+  --rating-none: #aeaeb2;
+
+  --card-hover-shadow: 0 16px 28px rgb(0 0 0 / 8%), 0 2px 8px rgb(0 0 0 / 5%);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #000000;
+    --surface: #1c1c1e;
     --text: #f5f5f7;
     --text-secondary: #86868b;
     --border: #424245;
     --accent: #2997ff;
     --skeleton: #1d1d1f;
     --topbar-bg: rgb(0 0 0 / 72%);
+    --badge-bg: rgb(28 28 30 / 78%);
+    --overlay-bg: rgb(0 0 0 / 65%);
+
+    --rating-good: #35c46a;
+    --rating-mid: #e0a020;
+    --rating-low: #ff6259;
+    --rating-none: #6e6e73;
+
+    --card-hover-shadow:
+      0 0 0 1px rgb(255 255 255 / 8%), 0 20px 32px rgb(0 0 0 / 60%);
   }
 }
 
