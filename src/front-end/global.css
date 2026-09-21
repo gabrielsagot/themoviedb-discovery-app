@@ -4,7 +4,9 @@
   --text: #1d1d1f;
   --text-secondary: #6e6e73;
   --border: #d2d2d7;
+  --hairline: rgb(0 0 0 / 8%);
   --accent: #0071e3;
+  --accent-hover: #0077ed;
   --skeleton: #e8e8ed;
   --topbar-bg: rgb(251 251 253 / 72%);
   --badge-bg: rgb(255 255 255 / 82%);
@@ -15,7 +17,10 @@
   --rating-low: #d93a2b;
   --rating-none: #aeaeb2;
 
-  --card-hover-shadow: 0 16px 28px rgb(0 0 0 / 8%), 0 2px 8px rgb(0 0 0 / 5%);
+  --poster-shadow: 0 1px 2px rgb(0 0 0 / 6%);
+  --poster-shadow-hover:
+    0 22px 38px -18px rgb(0 0 0 / 45%), 0 4px 10px rgb(0 0 0 / 8%);
+  --modal-shadow: 0 30px 60px rgb(0 0 0 / 30%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -25,7 +30,9 @@
     --text: #f5f5f7;
     --text-secondary: #86868b;
     --border: #424245;
+    --hairline: rgb(255 255 255 / 10%);
     --accent: #2997ff;
+    --accent-hover: #4aa8ff;
     --skeleton: #1d1d1f;
     --topbar-bg: rgb(0 0 0 / 72%);
     --badge-bg: rgb(28 28 30 / 78%);
@@ -36,8 +43,10 @@
     --rating-low: #ff6259;
     --rating-none: #6e6e73;
 
-    --card-hover-shadow:
-      0 0 0 1px rgb(255 255 255 / 8%), 0 20px 32px rgb(0 0 0 / 60%);
+    --poster-shadow: 0 1px 2px rgb(0 0 0 / 40%);
+    --poster-shadow-hover:
+      0 24px 44px -18px rgb(0 0 0 / 85%), 0 0 0 1px rgb(255 255 255 / 10%);
+    --modal-shadow: 0 30px 60px rgb(0 0 0 / 60%);
   }
 }
 
@@ -52,6 +61,9 @@ body {
 }
 
 body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
   background: var(--bg);
   color: var(--text);
   font-family:
@@ -72,6 +84,8 @@ a:focus-visible {
 
 main {
   display: block;
+  flex: 1;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 24px 96px;
@@ -80,6 +94,71 @@ main {
 @media (max-width: 640px) {
   main {
     padding: 28px 20px 64px;
+  }
+}
+
+/* Buttons */
+
+.button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 980px;
+  padding: 11px 24px;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.button--primary {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.button--outline {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text);
+}
+
+.button--outline:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border-color: color-mix(in srgb, var(--text) 32%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+
+  .button:active:not(:disabled) {
+    transform: none;
   }
 }
 
@@ -105,14 +184,28 @@ main {
 }
 
 .topbar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   font-size: 15px;
   font-weight: 600;
+  letter-spacing: -0.01em;
   white-space: nowrap;
+}
+
+.topbar__mark {
+  width: 22px;
+  height: 22px;
+  color: var(--text);
 }
 
 @media (max-width: 480px) {
   .topbar__brand {
     display: none;
+  }
+
+  .topbar__inner {
+    padding: 10px 20px;
   }
 }
 
@@ -134,6 +227,11 @@ main {
   transform: translateY(-50%);
   color: var(--text-secondary);
   pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+.search--focused .search__icon {
+  color: var(--text);
 }
 
 .search__input {
@@ -142,11 +240,14 @@ main {
   border: 1px solid var(--border);
   border-radius: 8px;
   background: color-mix(in srgb, var(--text) 5%, transparent);
-  padding: 0 30px;
+  padding: 0 32px;
   font-size: 14px;
   color: var(--text);
   font-family: inherit;
   appearance: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .search__input::placeholder {
@@ -155,6 +256,15 @@ main {
 
 .search__input::-webkit-search-cancel-button {
   display: none;
+}
+
+.search__input:hover {
+  border-color: color-mix(in srgb, var(--text) 26%, transparent);
+}
+
+.search__input:focus {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
 }
 
 .search__input:focus-visible {
@@ -186,4 +296,104 @@ main {
 .search__clear:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
+}
+
+.search__hint {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  min-width: 18px;
+  padding: 1px 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  font-family: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .search__hint {
+    display: none;
+  }
+}
+
+/* Footer */
+
+.footer {
+  border-top: 1px solid var(--border);
+}
+
+.footer__text {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 26px 24px 36px;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* Back to top */
+
+.scroll-top {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--badge-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    color 0.2s ease;
+}
+
+.scroll-top--visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.scroll-top:hover {
+  color: var(--accent);
+}
+
+.scroll-top:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.scroll-top svg {
+  width: 20px;
+  height: 20px;
+}
+
+@media (max-width: 640px) {
+  .scroll-top {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-top {
+    transition: opacity 0.25s ease;
+    transform: none;
+  }
 }
