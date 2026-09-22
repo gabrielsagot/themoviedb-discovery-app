@@ -8,12 +8,20 @@ import {
   DEFAULT_LANGUAGE,
   DEFAULT_PAGE,
   DEFAULT_REGION,
+  DEFAULT_SORT_BY,
 } from '../back-end/constants';
+import FilterBar from './components/FilterBar';
 import MovieDetailModal from './components/MovieDetailModal';
 import MovieItem from './components/MovieItem';
 import ScrollToTopButton from './components/ScrollToTopButton';
 import SearchBar from './components/SearchBar';
 import './app.css';
+
+type Filters = {
+  genreIds: number[];
+  sortBy: string;
+  year: number | null;
+};
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
@@ -26,18 +34,60 @@ const SPLASH_FADE_MS = 450;
 
 const numberFormatter = new Intl.NumberFormat('fr-FR');
 
-// Read the language / page / region query params, falling back to the
-// application defaults when they're missing or malformed.
+// Read the language / page / region / filter query params, falling back to
+// the application defaults when they're missing or malformed.
 const readUrlParams = () => {
   const queryParams = new URLSearchParams(window.location.search);
   const rawPage = queryParams.get('page') || DEFAULT_PAGE;
   const parsedPage = Number.parseInt(rawPage, 10);
 
+  const genreIds = (queryParams.get('genres') || '')
+    .split(',')
+    .map((id) => Number.parseInt(id, 10))
+    .filter((id) => Number.isFinite(id));
+
+  const rawYear = queryParams.get('year');
+  const parsedYear = rawYear ? Number.parseInt(rawYear, 10) : null;
+
   return {
     language: queryParams.get('language') || DEFAULT_LANGUAGE,
     page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
     region: queryParams.get('region') || DEFAULT_REGION,
+    genreIds,
+    sortBy: queryParams.get('sort') || DEFAULT_SORT_BY,
+    year:
+      parsedYear !== null && Number.isFinite(parsedYear) ? parsedYear : null,
   };
+};
+
+// Writes the current filters into the URL as query params (dropping
+// whichever ones are at their default, to keep the URL clean) via
+// pushState, so the resulting link is shareable and the browser's back
+// button steps back through filter changes.
+const pushFiltersToUrl = (filters: Filters) => {
+  const queryParams = new URLSearchParams(window.location.search);
+
+  if (filters.genreIds.length > 0) {
+    queryParams.set('genres', filters.genreIds.join(','));
+  } else {
+    queryParams.delete('genres');
+  }
+
+  if (filters.sortBy !== DEFAULT_SORT_BY) {
+    queryParams.set('sort', filters.sortBy);
+  } else {
+    queryParams.delete('sort');
+  }
+
+  if (filters.year !== null) {
+    queryParams.set('year', String(filters.year));
+  } else {
+    queryParams.delete('year');
+  }
+
+  const queryString = queryParams.toString();
+  const newUrl = `${window.location.pathname}${queryString ? `?${queryString}` : ''}`;
+  window.history.pushState(null, '', newUrl);
 };
 
 export default function App() {
@@ -48,6 +98,14 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [status, setStatus] = useState<LoadState>('loading');
   const [activeQuery, setActiveQuery] = useState('');
+
+  // Genres/sort/year filters, mutually exclusive with text search since
+  // TMDB's search endpoint doesn't support them. Initialized from the URL
+  // so a shared filtered link opens already filtered.
+  const [filters, setFilters] = useState<Filters>(() => {
+    const { genreIds, sortBy, year } = readUrlParams();
+    return { genreIds, sortBy, year };
+  });
 
   // "Load more" has its own loading and error state: a failed extra page
   // shouldn't wipe out the movies already on screen.
@@ -76,9 +134,26 @@ export default function App() {
     (pageToLoad: number, mode: 'replace' | 'append') => {
       const { language, region } = readUrlParams();
 
-      const endpoint = activeQuery
-        ? `/api/movies/search?query=${encodeURIComponent(activeQuery)}&language=${language}&page=${pageToLoad}&region=${region}`
-        : `/api/movies/popular?language=${language}&page=${pageToLoad}&region=${region}`;
+      let endpoint: string;
+      if (activeQuery) {
+        endpoint = `/api/movies/search?query=${encodeURIComponent(activeQuery)}&language=${language}&page=${pageToLoad}&region=${region}`;
+      } else {
+        const queryParams = new URLSearchParams({
+          language,
+          page: String(pageToLoad),
+          region,
+        });
+        if (filters.genreIds.length > 0) {
+          queryParams.set('genres', filters.genreIds.join(','));
+        }
+        if (filters.sortBy !== DEFAULT_SORT_BY) {
+          queryParams.set('sort', filters.sortBy);
+        }
+        if (filters.year !== null) {
+          queryParams.set('year', String(filters.year));
+        }
+        endpoint = `/api/movies/popular?${queryParams.toString()}`;
+      }
 
       fetch(endpoint)
         .then(async (response) => {
@@ -114,7 +189,7 @@ export default function App() {
           }
         });
     },
-    [activeQuery],
+    [activeQuery, filters],
   );
 
   // useEffect hook to fetch data from an API when the component mounts,
@@ -137,6 +212,23 @@ export default function App() {
       .catch(() => {
         /* genre chips are optional; the modal still works without them */
       });
+  }, []);
+
+  // Resync filters from the URL on browser back/forward. pushFiltersToUrl is
+  // the only thing that ever pushes a history entry, so this only fires for
+  // filter changes (or a manual URL edit) — updating `filters` here gives
+  // `loadMovies` a new identity, which the mount effect above picks up to
+  // reload page 1 with the restored filters.
+  useEffect(() => {
+    const handlePopState = () => {
+      const { genreIds, sortBy, year } = readUrlParams();
+      setFilters({ genreIds, sortBy, year });
+      setStatus('loading');
+      setLoadMoreFailed(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
   }, []);
 
   // Take down the splash screen once the first load has settled, one way
@@ -184,6 +276,31 @@ export default function App() {
     setIsLoadingMore(true);
     setLoadMoreFailed(false);
     loadMovies(currentPage + 1, 'append');
+  };
+
+  // Applies a new set of filters: updates the state that drives the next
+  // fetch, and pushes it to the URL so the result is shareable and the
+  // browser's back button can step back through it.
+  const applyFilters = (next: Filters) => {
+    setFilters(next);
+    pushFiltersToUrl(next);
+    setStatus('loading');
+    setLoadMoreFailed(false);
+  };
+
+  const handleToggleGenre = (genreId: number) => {
+    const genreIds = filters.genreIds.includes(genreId)
+      ? filters.genreIds.filter((id) => id !== genreId)
+      : [...filters.genreIds, genreId];
+    applyFilters({ ...filters, genreIds });
+  };
+
+  const handleSortChange = (sortBy: string) => {
+    applyFilters({ ...filters, sortBy });
+  };
+
+  const handleYearChange = (year: number | null) => {
+    applyFilters({ ...filters, year });
   };
 
   const handleSelectMovie = (movie: Movie, trigger: HTMLElement) => {
@@ -245,6 +362,18 @@ export default function App() {
             )}
           </h2>
         </header>
+
+        {!activeQuery && (
+          <FilterBar
+            genres={genres}
+            selectedGenreIds={filters.genreIds}
+            sortBy={filters.sortBy}
+            year={filters.year}
+            onToggleGenre={handleToggleGenre}
+            onSortChange={handleSortChange}
+            onYearChange={handleYearChange}
+          />
+        )}
 
         <section>
           {status === 'loading' && (
@@ -364,6 +493,7 @@ export default function App() {
           movie={selectedMovie}
           genreMap={genreMap}
           onClose={handleCloseModal}
+          onSelectSimilar={handleSelectMovie}
         />
       )}
     </>
