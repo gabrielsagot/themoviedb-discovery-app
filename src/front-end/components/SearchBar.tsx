@@ -2,12 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 
 type SearchBarProps = {
   onSearch: (query: string) => void;
+  /** Query already present in the URL when the bar first mounts. */
+  initialQuery?: string;
 };
 
 const DEBOUNCE_MS = 350;
 
-export default function SearchBar({ onSearch }: SearchBarProps) {
-  const [value, setValue] = useState('');
+export default function SearchBar({
+  onSearch,
+  initialQuery = '',
+}: SearchBarProps) {
+  const [value, setValue] = useState(initialQuery);
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 

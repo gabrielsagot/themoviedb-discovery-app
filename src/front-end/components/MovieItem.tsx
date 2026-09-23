@@ -1,32 +1,23 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import type { Movie } from '../../back-end/schemas/MoviesTypes';
 import RatingRing from './RatingRing';
 
 type MovieItemProps = {
   movie: Movie;
-  onSelect: (movie: Movie, trigger: HTMLElement) => void;
 };
 
 const POSTER_BASE_URL = 'https://image.tmdb.org/t/p';
 
-export default function MovieItem({ movie, onSelect }: MovieItemProps) {
+export default function MovieItem({ movie }: MovieItemProps) {
   // Posters fade in once decoded, so a slow connection shows an empty
   // frame filling in rather than images popping into place.
   const [isPosterReady, setIsPosterReady] = useState(false);
 
   const year = movie.release_date ? movie.release_date.slice(0, 4) : '—';
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    onSelect(movie, event.currentTarget);
-  };
-
   return (
-    <button
-      type="button"
-      className="movie"
-      onClick={handleClick}
-      aria-haspopup="dialog"
-    >
+    <Link className="movie" to={`/movies/${movie.id}`}>
       <span className="movie__frame">
         {movie.poster_path ? (
           <img
@@ -72,6 +63,6 @@ export default function MovieItem({ movie, onSelect }: MovieItemProps) {
       <span className="movie__title">{movie.title}</span>
       <span className="movie__meta">{year}</span>
       <span className="movie__overview">{movie.overview}</span>
-    </button>
+    </Link>
   );
 }

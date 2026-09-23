@@ -10,7 +10,6 @@
   --skeleton: #e8e8ed;
   --topbar-bg: rgb(251 251 253 / 72%);
   --badge-bg: rgb(255 255 255 / 82%);
-  --overlay-bg: rgb(0 0 0 / 40%);
 
   --rating-good: #1a9e5a;
   --rating-mid: #c8790a;
@@ -20,7 +19,6 @@
   --poster-shadow: 0 1px 2px rgb(0 0 0 / 6%);
   --poster-shadow-hover:
     0 22px 38px -18px rgb(0 0 0 / 45%), 0 4px 10px rgb(0 0 0 / 8%);
-  --modal-shadow: 0 30px 60px rgb(0 0 0 / 30%);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -36,7 +34,6 @@
     --skeleton: #1d1d1f;
     --topbar-bg: rgb(0 0 0 / 72%);
     --badge-bg: rgb(28 28 30 / 78%);
-    --overlay-bg: rgb(0 0 0 / 65%);
 
     --rating-good: #35c46a;
     --rating-mid: #e0a020;
@@ -46,7 +43,6 @@
     --poster-shadow: 0 1px 2px rgb(0 0 0 / 40%);
     --poster-shadow-hover:
       0 24px 44px -18px rgb(0 0 0 / 85%), 0 0 0 1px rgb(255 255 255 / 10%);
-    --modal-shadow: 0 30px 60px rgb(0 0 0 / 60%);
   }
 }
 
@@ -86,13 +82,17 @@ main {
   display: block;
   flex: 1;
   width: 100%;
+}
+
+/* Shared page container: every route renders its content inside one. */
+.app-shell {
   max-width: 1200px;
   margin: 0 auto;
   padding: 40px 24px 96px;
 }
 
 @media (max-width: 640px) {
-  main {
+  .app-shell {
     padding: 28px 20px 64px;
   }
 }
@@ -110,6 +110,7 @@ main {
   font: inherit;
   font-size: 15px;
   font-weight: 500;
+  text-decoration: none;
   cursor: pointer;
   transition:
     background-color 0.2s ease,
