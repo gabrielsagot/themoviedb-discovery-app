@@ -2,10 +2,11 @@ import type { Express } from 'express';
 import express from 'express';
 import { DEFAULT_LANGUAGE, DEFAULT_PAGE, DEFAULT_REGION } from './constants';
 import type { ApiErrorResponse } from './schemas/MoviesTypes';
-import { fetchMoviesFromTmdb } from './utils';
+import { fetchMovieDetailsFromTmdb, fetchMoviesFromTmdb } from './utils';
 
 /**
- * Registers the movie routes: the popular list and the search endpoint.
+ * Registers the movie routes: the popular list, the search endpoint and the
+ * details of a single movie.
  * @param app The express application to register the routes on.
  */
 export function registerMoviesApi(app: Express): void {
@@ -72,6 +73,45 @@ export function registerMoviesApi(app: Express): void {
         console.error('Error searching movies:', error);
         const errorResponse: ApiErrorResponse = {
           error: 'Failed to search movies',
+        };
+        res.status(500).json(errorResponse);
+      }
+    },
+  );
+
+  // Define a route handler for fetching the details of a single movie.
+  // Registered after /api/movies/search on purpose: express matches routes in
+  // order, so a dynamic ':id' declared first would swallow '/search'.
+  app.get(
+    '/api/movies/:id',
+    async (_req: express.Request<{ id: string }>, res: express.Response) => {
+      const { id } = _req.params;
+      const { language } = _req.query;
+
+      // TMDB identifiers are numeric; anything else is a malformed request
+      // rather than a movie that happens to be missing.
+      if (!/^\d+$/.test(id)) {
+        const errorResponse: ApiErrorResponse = {
+          error: 'A numeric movie id is required',
+        };
+        res.status(400).json(errorResponse);
+        return;
+      }
+
+      try {
+        const queryParams = new URLSearchParams();
+        queryParams.append(
+          'language',
+          (language as string) || DEFAULT_LANGUAGE,
+        );
+
+        const data = await fetchMovieDetailsFromTmdb(id, queryParams);
+
+        res.json(data);
+      } catch (error) {
+        console.error(`Error fetching details for movie ${id}:`, error);
+        const errorResponse: ApiErrorResponse = {
+          error: 'Failed to fetch movie details',
         };
         res.status(500).json(errorResponse);
       }

@@ -1,7 +1,9 @@
 import type {
   TmdbMoviesRawResponse,
   TmdbGenresRawResponse,
+  TmdbMovieDetailsRawResponse,
   Movie,
+  MovieDetails,
   MoviesApiResponse,
   GenresApiResponse,
 } from './schemas/MoviesTypes';
@@ -98,4 +100,55 @@ export const fetchGenresFromTmdb = async (
   );
 
   return { genres: rawData.genres };
+};
+
+/**
+ * Transforms a raw TMDB movie details object into the detailed format used
+ * by our application, omitting the properties we don't expose.
+ * @param movie The raw movie details object returned by TMDB.
+ * @returns The supported MovieDetails object.
+ */
+export const toSupportedMovieDetails = (
+  movie: TmdbMovieDetailsRawResponse,
+): MovieDetails => {
+  return {
+    backdrop_path: movie.backdrop_path,
+    budget: movie.budget,
+    genres: movie.genres,
+    homepage: movie.homepage,
+    id: movie.id,
+    imdb_id: movie.imdb_id,
+    original_language: movie.original_language,
+    original_title: movie.original_title,
+    overview: movie.overview,
+    popularity: movie.popularity,
+    poster_path: movie.poster_path,
+    production_companies: movie.production_companies,
+    release_date: movie.release_date,
+    revenue: movie.revenue,
+    runtime: movie.runtime,
+    status: movie.status,
+    tagline: movie.tagline,
+    title: movie.title,
+    vote_average: movie.vote_average,
+    vote_count: movie.vote_count,
+  };
+};
+
+/**
+ * Fetches the details of a single movie from TMDB by its identifier.
+ * @param movieId The TMDB identifier of the movie.
+ * @param params The query params to send to TMDB (e.g. language).
+ * @returns The movie details in our application's supported format.
+ */
+export const fetchMovieDetailsFromTmdb = async (
+  movieId: string,
+  params: URLSearchParams,
+): Promise<MovieDetails> => {
+  const rawData = await tmdbFetch<TmdbMovieDetailsRawResponse>(
+    `movie/${movieId}`,
+    params,
+  );
+
+  return toSupportedMovieDetails(rawData);
 };

@@ -47,9 +47,29 @@ describe('back-end server routes', () => {
     });
   });
 
+  describe('route ordering', () => {
+    it('registers /api/movies/search before the dynamic /api/movies/:id', () => {
+      expect(registeredPaths.indexOf('/api/movies/search')).toBeLessThan(
+        registeredPaths.indexOf('/api/movies/:id'),
+      );
+    });
+  });
+
   describe('route registration', () => {
     it('registers the /api/movies/popular route', () => {
       expect(registeredPaths).toContain('/api/movies/popular');
+    });
+
+    it('registers the /api/movies/search route', () => {
+      expect(registeredPaths).toContain('/api/movies/search');
+    });
+
+    it('registers the /api/movies/:id route', () => {
+      expect(registeredPaths).toContain('/api/movies/:id');
+    });
+
+    it('registers the /api/genres route', () => {
+      expect(registeredPaths).toContain('/api/genres');
     });
 
     it('registers the /api/health route', () => {
