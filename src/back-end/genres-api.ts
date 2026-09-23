@@ -1,6 +1,7 @@
 import type { Express } from 'express';
 import express from 'express';
-import { DEFAULT_LANGUAGE } from './constants';
+import { DEFAULT_LANGUAGE, GENRES_CACHE_TTL_MS } from './constants';
+import { setCacheControl } from './http';
 import type { ApiErrorResponse } from './schemas/MoviesTypes';
 import { fetchGenresFromTmdb } from './utils';
 
@@ -10,7 +11,8 @@ import { fetchGenresFromTmdb } from './utils';
  * @param app The express application to register the routes on.
  */
 export function registerGenresApi(app: Express): void {
-  // Define a route handler for fetching the list of official movie genres
+  // Define a route handler for fetching the list of official movie genres,
+  // used by the front-end to turn a movie's genre_ids into display names.
   app.get(
     '/api/genres',
     async (_req: express.Request, res: express.Response) => {
@@ -24,6 +26,7 @@ export function registerGenresApi(app: Express): void {
 
         const data = await fetchGenresFromTmdb(queryParams);
 
+        setCacheControl(res, GENRES_CACHE_TTL_MS);
         res.json(data);
       } catch (error) {
         console.error('Error fetching genres:', error);

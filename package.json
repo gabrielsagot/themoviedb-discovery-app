@@ -21,8 +21,8 @@
     "prepare": "husky",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:client": "vite",
-    "lint": "oxlint -c oxlint.config.ts .",
-    "lint:fix": "oxlint -c oxlint.config.ts --fix .",
+    "lint": "oxlint -c oxlint.config.json .",
+    "lint:fix": "oxlint -c oxlint.config.json --fix .",
     "fmt": "oxfmt",
     "fmt:check": "oxfmt --check"
   },
