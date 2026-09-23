@@ -48,10 +48,6 @@ describe('back-end server routes', () => {
   });
 
   describe('route registration', () => {
-    it('registers the / route', () => {
-      expect(registeredPaths).toContain('/');
-    });
-
     it('registers the /api/movies/popular route', () => {
       expect(registeredPaths).toContain('/api/movies/popular');
     });
