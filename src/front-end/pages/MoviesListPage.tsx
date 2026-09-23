@@ -8,28 +8,47 @@ import {
   DEFAULT_LANGUAGE,
   DEFAULT_PAGE,
   DEFAULT_REGION,
+  DEFAULT_SORT_BY,
 } from '../../back-end/constants';
+import EmptyStateIllustration from '../components/EmptyStateIllustration';
+import FilterBar from '../components/FilterBar';
 import MovieItem from '../components/MovieItem';
+import { useGenres } from '../hooks/useGenres';
 
 type LoadState = 'loading' | 'loaded' | 'error';
 
-const numberFormatter = new Intl.NumberFormat('fr-FR');
-
-// Read a page number from the URL, falling back to the first page when it's
-// missing or malformed.
-const parsePage = (rawPage: string | null): number => {
-  const parsed = Number.parseInt(rawPage || DEFAULT_PAGE, 10);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 1;
+type MoviesListPageProps = {
+  /** Clears the search field, which lives in the top bar above the routes. */
+  onClearSearch: () => void;
 };
 
-export default function MoviesListPage() {
-  // The search query and the TMDB parameters all live in the URL, so a
-  // result list can be shared, bookmarked and walked back through.
-  const [searchParams] = useSearchParams();
+const numberFormatter = new Intl.NumberFormat('fr-FR');
+
+export default function MoviesListPage({ onClearSearch }: MoviesListPageProps) {
+  // The search query, the filters and the TMDB parameters all live in the
+  // URL, so a filtered or searched list can be shared and the browser's back
+  // button steps back through them.
+  const [searchParams, setSearchParams] = useSearchParams();
+
   const activeQuery = (searchParams.get('query') ?? '').trim();
   const language = searchParams.get('language') || DEFAULT_LANGUAGE;
   const region = searchParams.get('region') || DEFAULT_REGION;
-  const requestedPage = parsePage(searchParams.get('page'));
+  const sortBy = searchParams.get('sort') || DEFAULT_SORT_BY;
+
+  const genreIds = (searchParams.get('genres') || '')
+    .split(',')
+    .map((id) => Number.parseInt(id, 10))
+    .filter((id) => Number.isFinite(id));
+
+  const rawYear = searchParams.get('year');
+  const parsedYear = rawYear ? Number.parseInt(rawYear, 10) : null;
+  const year =
+    parsedYear !== null && Number.isFinite(parsedYear) ? parsedYear : null;
+
+  const rawPage = searchParams.get('page') || DEFAULT_PAGE;
+  const parsedPage = Number.parseInt(rawPage, 10);
+  const requestedPage =
+    Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1;
 
   const [movies, setMovies] = useState<Movie[] | null>(null);
   const [totalResults, setTotalResults] = useState<number | null>(null);
@@ -37,25 +56,46 @@ export default function MoviesListPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [status, setStatus] = useState<LoadState>('loading');
 
-  // Which query the movies on screen belong to. Comparing it with the query
-  // in the URL tells us the list is stale without setting state from inside
-  // the effect that starts the fetch.
-  const [loadedQuery, setLoadedQuery] = useState<string | null>(null);
+  // Which request the movies on screen belong to. Comparing it with what the
+  // URL asks for now tells us the list is stale, without setting state
+  // synchronously inside the effect that starts the fetch.
+  const requestKey = `${activeQuery}|${genreIds.join(',')}|${sortBy}|${year ?? ''}`;
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
 
   // "Load more" has its own loading and error state: a failed extra page
   // shouldn't wipe out the movies already on screen.
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [loadMoreFailed, setLoadMoreFailed] = useState(false);
 
-  // Fetch popular movies, or search results when a query is active. Only
-  // touches state from the promise callbacks, never synchronously, so it
-  // stays safe to call from an effect. 'append' adds the page to what's
-  // already on screen (the "voir plus" button), 'replace' starts over.
+  const { genres } = useGenres(language);
+
+  // Fetch the discover list (with its filters), or search results when a
+  // query is active. Only touches state from the promise callbacks, never
+  // synchronously, so it stays safe to call from an effect. 'append' adds
+  // the page to what's already on screen, 'replace' starts over.
   const loadMovies = useCallback(
     (pageToLoad: number, mode: 'replace' | 'append') => {
-      const endpoint = activeQuery
-        ? `/api/movies/search?query=${encodeURIComponent(activeQuery)}&language=${language}&page=${pageToLoad}&region=${region}`
-        : `/api/movies/popular?language=${language}&page=${pageToLoad}&region=${region}`;
+      let endpoint: string;
+
+      if (activeQuery) {
+        endpoint = `/api/movies/search?query=${encodeURIComponent(activeQuery)}&language=${language}&page=${pageToLoad}&region=${region}`;
+      } else {
+        const queryParams = new URLSearchParams({
+          language,
+          page: String(pageToLoad),
+          region,
+        });
+        if (genreIds.length > 0) {
+          queryParams.set('genres', genreIds.join(','));
+        }
+        if (sortBy !== DEFAULT_SORT_BY) {
+          queryParams.set('sort', sortBy);
+        }
+        if (year !== null) {
+          queryParams.set('year', String(year));
+        }
+        endpoint = `/api/movies/popular?${queryParams.toString()}`;
+      }
 
       fetch(endpoint)
         .then(async (response) => {
@@ -79,7 +119,7 @@ export default function MoviesListPage() {
           setTotalResults(data.total_results);
           setTotalPages(data.total_pages);
           setCurrentPage(data.page);
-          setLoadedQuery(activeQuery);
+          setLoadedKey(requestKey);
           setStatus('loaded');
           setIsLoadingMore(false);
         })
@@ -88,19 +128,71 @@ export default function MoviesListPage() {
             setIsLoadingMore(false);
             setLoadMoreFailed(true);
           } else {
-            setLoadedQuery(activeQuery);
+            setLoadedKey(requestKey);
             setStatus('error');
           }
         });
     },
-    [activeQuery, language, region],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeQuery, language, region, requestKey],
   );
 
-  // Runs on mount and again whenever the URL changes the query, the page or
-  // the TMDB parameters.
+  // Runs on mount, and again whenever the URL changes the query, the filters
+  // or the TMDB parameters.
   useEffect(() => {
     loadMovies(requestedPage, 'replace');
   }, [loadMovies, requestedPage]);
+
+  // Every filter change rewrites the URL, which is what triggers the reload
+  // above. Page 1 is implied by a new set of filters.
+  const updateParams = (mutate: (params: URLSearchParams) => void) => {
+    const params = new URLSearchParams(searchParams);
+    mutate(params);
+    params.delete('page');
+    setSearchParams(params);
+  };
+
+  const handleToggleGenre = (id: number) => {
+    updateParams((params) => {
+      const next = genreIds.includes(id)
+        ? genreIds.filter((genreId) => genreId !== id)
+        : [...genreIds, id];
+
+      if (next.length > 0) {
+        params.set('genres', next.join(','));
+      } else {
+        params.delete('genres');
+      }
+    });
+  };
+
+  const handleSortChange = (nextSortBy: string) => {
+    updateParams((params) => {
+      if (nextSortBy !== DEFAULT_SORT_BY) {
+        params.set('sort', nextSortBy);
+      } else {
+        params.delete('sort');
+      }
+    });
+  };
+
+  const handleYearChange = (nextYear: number | null) => {
+    updateParams((params) => {
+      if (nextYear !== null) {
+        params.set('year', String(nextYear));
+      } else {
+        params.delete('year');
+      }
+    });
+  };
+
+  const handleClearFilters = () => {
+    updateParams((params) => {
+      params.delete('genres');
+      params.delete('sort');
+      params.delete('year');
+    });
+  };
 
   const handleRetry = () => {
     setStatus('loading');
@@ -113,9 +205,9 @@ export default function MoviesListPage() {
     loadMovies(currentPage + 1, 'append');
   };
 
-  // A new query is in the URL but its results haven't landed yet: show the
-  // skeletons rather than the previous search's movies.
-  const isStale = loadedQuery !== activeQuery;
+  // A new query or filter set is in the URL but its results haven't landed
+  // yet: show the skeletons rather than the previous list.
+  const isStale = loadedKey !== requestKey;
   const isLoading = status === 'loading' || (isStale && status !== 'error');
   const hasMorePages = currentPage < totalPages;
 
@@ -143,6 +235,20 @@ export default function MoviesListPage() {
         </h2>
       </header>
 
+      {/* TMDB's search endpoint ignores discover's filters, so the filter bar
+          only makes sense when no text search is active. */}
+      {!activeQuery && (
+        <FilterBar
+          genres={genres}
+          selectedGenreIds={genreIds}
+          sortBy={sortBy}
+          year={year}
+          onToggleGenre={handleToggleGenre}
+          onSortChange={handleSortChange}
+          onYearChange={handleYearChange}
+        />
+      )}
+
       <section>
         {isLoading && (
           <ul
@@ -162,6 +268,7 @@ export default function MoviesListPage() {
 
         {!isLoading && status === 'error' && (
           <div className="error-state">
+            <EmptyStateIllustration />
             <h2 className="error-state__title">
               Les films n'ont pas pu être chargés
             </h2>
@@ -228,12 +335,41 @@ export default function MoviesListPage() {
 
         {!isLoading && status === 'loaded' && movies && movies.length === 0 && (
           <div className="empty-state">
-            <p className="empty-state__title">
-              Aucun film ne correspond à « {activeQuery} »
-            </p>
-            <p className="empty-state__hint">
-              Vérifie l'orthographe, ou cherche avec le titre original.
-            </p>
+            <EmptyStateIllustration />
+            {activeQuery ? (
+              <>
+                <p className="empty-state__title">
+                  Aucun film ne correspond à « {activeQuery} »
+                </p>
+                <p className="empty-state__hint">
+                  Vérifie l'orthographe, ou cherche avec le titre original.
+                </p>
+                <button
+                  type="button"
+                  className="button button--outline empty-state__action"
+                  onClick={onClearSearch}
+                >
+                  Effacer la recherche
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="empty-state__title">
+                  Aucun film ne correspond à ces filtres
+                </p>
+                <p className="empty-state__hint">
+                  Essaie d'élargir tes critères : moins de genres, ou une autre
+                  année.
+                </p>
+                <button
+                  type="button"
+                  className="button button--outline empty-state__action"
+                  onClick={handleClearFilters}
+                >
+                  Supprimer les filtres
+                </button>
+              </>
+            )}
           </div>
         )}
       </section>

@@ -56,39 +56,59 @@ export type GenresApiResponse = {
   genres: Genre[];
 };
 
-// TypeScript type for a production company attached to a movie.
-export type ProductionCompany = {
+// TypeScript type for a single raw cast member, as returned by TMDB's credits.
+export type TmdbCastMember = {
   id: number;
-  logo_path: string | null;
   name: string;
-  origin_country: string;
+  character: string;
+  profile_path: string | null;
+  order: number;
 };
 
-// TypeScript type for the raw response from the TMDB API for a single movie's details.
+// TypeScript type for a single raw crew member, as returned by TMDB's credits.
+export type TmdbCrewMember = {
+  id: number;
+  name: string;
+  job: string;
+  department: string;
+};
+
+// TypeScript type for a single raw video entry (trailer, teaser, ...), as
+// returned by TMDB's videos.
+export type TmdbVideo = {
+  id: string;
+  key: string;
+  site: string;
+  type: string;
+  official?: boolean;
+};
+
+// TypeScript type for the raw response from the TMDB API for a single movie's
+// full details, requested with append_to_response=credits,videos,similar.
 export type TmdbMovieDetailsRawResponse = TmdbMovie & {
-  belongs_to_collection: unknown | null;
-  budget: number;
-  genres: Genre[];
-  homepage: string | null;
-  imdb_id: string | null;
-  production_companies: ProductionCompany[];
-  revenue: number;
   runtime: number | null;
-  status: string;
-  tagline: string | null;
+  tagline: string;
+  credits: { cast: TmdbCastMember[]; crew: TmdbCrewMember[] };
+  videos: { results: TmdbVideo[] };
+  similar: { results: Array<TmdbMovie & { video?: boolean }> };
 };
 
-// TypeScript type for the detailed movie format used in our application. It
-// extends the list format with the fields only the details endpoint returns,
-// and replaces genre_ids with the full genre objects TMDB provides here.
-export type MovieDetails = Omit<Movie, 'genre_ids'> & {
-  budget: number;
-  genres: Genre[];
-  homepage: string | null;
-  imdb_id: string | null;
-  production_companies: ProductionCompany[];
-  revenue: number;
+// TypeScript type for the reduced cast member shape exposed to the front-end.
+export type CastMember = {
+  id: number;
+  name: string;
+  character: string;
+  profile_path: string | null;
+};
+
+// TypeScript type for the full movie details response exposed to the
+// front-end: the base Movie fields plus runtime, tagline, director, cast,
+// trailer and similar movies.
+export type MovieDetails = Movie & {
   runtime: number | null;
-  status: string;
-  tagline: string | null;
+  tagline: string;
+  director: string | null;
+  cast: CastMember[];
+  trailerKey: string | null;
+  similar: Movie[];
 };

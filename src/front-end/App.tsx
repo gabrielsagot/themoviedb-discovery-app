@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useState } from 'react';
 import {
   Navigate,
   Route,
@@ -6,47 +6,31 @@ import {
   useNavigate,
   useSearchParams,
 } from 'react-router';
+import BrandMark from './components/BrandMark';
+import ScrollToTopButton from './components/ScrollToTopButton';
+import SearchBar from './components/SearchBar';
+import { useDismissSplash } from './hooks/useDismissSplash';
 import MovieDetailPage from './pages/MovieDetailPage';
 import MoviesListPage from './pages/MoviesListPage';
 import NotFoundPage from './pages/NotFoundPage';
-import ScrollToTopButton from './components/ScrollToTopButton';
-import SearchBar from './components/SearchBar';
 import './app.css';
-
-// Timestamp of the first module evaluation: the splash screen stays up for
-// at least a moment after it, so a fast boot doesn't make it flash past
-// before anyone can read it.
-const APP_STARTED_AT = Date.now();
-const MIN_SPLASH_MS = 700;
-const SPLASH_FADE_MS = 450;
 
 export default function App() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Take down the splash screen once React has mounted. It's plain DOM work
-  // because the splash lives in index.html, where it can be painted before
-  // React even boots.
-  useEffect(() => {
-    const splash = document.getElementById('splash');
-    if (!splash || splash.dataset.hiding === '1') return;
+  // Bumped to force-remount SearchBar (see its `key` below), which clears
+  // its own internal input value. SearchBar owns that value itself — the
+  // only way to reset it from here is to give it a fresh instance.
+  const [searchResetKey, setSearchResetKey] = useState(0);
 
-    const remaining = Math.max(
-      0,
-      MIN_SPLASH_MS - (Date.now() - APP_STARTED_AT),
-    );
-    const timer = window.setTimeout(() => {
-      splash.dataset.hiding = '1';
-      window.setTimeout(() => splash.remove(), SPLASH_FADE_MS);
-    }, remaining);
-
-    return () => window.clearTimeout(timer);
-  }, []);
+  // The shell is up as soon as React mounts; each page shows its own
+  // skeletons while its data loads.
+  useDismissSplash(true);
 
   // Searching puts the query in the URL and lands on the list, wherever the
-  // search was started from — including the detail page. Replacing rather
-  // than pushing keeps one history entry per search instead of one per
-  // keystroke.
+  // search was started from — including a detail page. Replacing rather than
+  // pushing keeps one history entry per search instead of one per keystroke.
   const handleSearch = (query: string) => {
     const params = new URLSearchParams(searchParams);
 
@@ -61,29 +45,23 @@ export default function App() {
     navigate(`/movies${search ? `?${search}` : ''}`, { replace: true });
   };
 
+  // Clearing from the empty state also has to empty the field itself, which
+  // lives up here in the top bar.
+  const handleClearSearch = () => {
+    setSearchResetKey((key) => key + 1);
+    handleSearch('');
+  };
+
   return (
     <>
       <header className="topbar">
         <div className="topbar__inner">
           <span className="topbar__brand">
-            <svg
-              className="topbar__mark"
-              viewBox="0 0 64 64"
-              aria-hidden="true"
-              focusable="false"
-            >
-              <rect width="64" height="64" rx="15" fill="currentColor" />
-              <path
-                d="M25 20.5 L44.5 32 L25 43.5 Z"
-                fill="var(--bg)"
-                stroke="var(--bg)"
-                strokeWidth="5.5"
-                strokeLinejoin="round"
-              />
-            </svg>
+            <BrandMark className="topbar__mark" />
             TMDB Discovery
           </span>
           <SearchBar
+            key={searchResetKey}
             onSearch={handleSearch}
             initialQuery={searchParams.get('query') ?? ''}
           />
@@ -92,7 +70,10 @@ export default function App() {
 
       <Routes>
         <Route path="/" element={<Navigate to="/movies" replace />} />
-        <Route path="/movies" element={<MoviesListPage />} />
+        <Route
+          path="/movies"
+          element={<MoviesListPage onClearSearch={handleClearSearch} />}
+        />
         <Route path="/movies/:id" element={<MovieDetailPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
