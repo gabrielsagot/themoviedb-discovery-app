@@ -55,3 +55,40 @@ export type TmdbGenresRawResponse = {
 export type GenresApiResponse = {
   genres: Genre[];
 };
+
+// TypeScript type for a production company attached to a movie.
+export type ProductionCompany = {
+  id: number;
+  logo_path: string | null;
+  name: string;
+  origin_country: string;
+};
+
+// TypeScript type for the raw response from the TMDB API for a single movie's details.
+export type TmdbMovieDetailsRawResponse = TmdbMovie & {
+  belongs_to_collection: unknown | null;
+  budget: number;
+  genres: Genre[];
+  homepage: string | null;
+  imdb_id: string | null;
+  production_companies: ProductionCompany[];
+  revenue: number;
+  runtime: number | null;
+  status: string;
+  tagline: string | null;
+};
+
+// TypeScript type for the detailed movie format used in our application. It
+// extends the list format with the fields only the details endpoint returns,
+// and replaces genre_ids with the full genre objects TMDB provides here.
+export type MovieDetails = Omit<Movie, 'genre_ids'> & {
+  budget: number;
+  genres: Genre[];
+  homepage: string | null;
+  imdb_id: string | null;
+  production_companies: ProductionCompany[];
+  revenue: number;
+  runtime: number | null;
+  status: string;
+  tagline: string | null;
+};
