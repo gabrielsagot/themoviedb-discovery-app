@@ -29,6 +29,212 @@
   color: var(--text-secondary);
 }
 
+/* Filter bar
+   Hidden by App whenever a text search is active — TMDB's search endpoint
+   doesn't support these filters, so there's nothing useful to show. */
+
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  margin-bottom: 40px;
+}
+
+.filter-bar__genres {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-bar__pill-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Each genre row is exactly half the genre list (see FilterBar.tsx) and
+   stretched edge to edge with justify-content, so the pills always read as
+   two full lines rather than one packed row followed by a short, ragged
+   one trailing off with dead space on the right. */
+.filter-bar__genres .filter-bar__pill-row {
+  justify-content: space-between;
+}
+
+.genre-pill {
+  appearance: none;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  padding: 6px 14px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.genre-pill:hover {
+  border-color: color-mix(in srgb, var(--text) 32%, transparent);
+  color: var(--text);
+}
+
+.genre-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.genre-pill--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.genre-pill--active:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: #ffffff;
+}
+
+/* Set off from the genre pills above with a rule and its own top padding —
+   on top of the extra gap, that's what keeps the two pill groups (genres
+   above, sort below) from reading as one undifferentiated block. */
+.filter-bar__controls {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding-top: 26px;
+  border-top: 1px solid var(--border);
+}
+
+.filter-bar__sort {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.filter-bar__sort .filter-bar__pill-row {
+  flex: 1;
+}
+
+.filter-bar__direction {
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.filter-bar__direction-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.filter-bar__direction-btn + .filter-bar__direction-btn {
+  border-left: 1px solid var(--border);
+}
+
+.filter-bar__direction-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.filter-bar__direction-btn:hover {
+  color: var(--text);
+}
+
+.filter-bar__direction-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.filter-bar__direction-btn--active {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.filter-bar__direction-btn--active:hover {
+  background: var(--accent-hover);
+  color: #ffffff;
+}
+
+.filter-bar__field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.filter-bar__label {
+  flex: none;
+  font-weight: 500;
+}
+
+.filter-bar__select-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.filter-bar__select {
+  appearance: none;
+  height: 34px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--text) 5%, transparent);
+  padding: 0 30px 0 12px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.filter-bar__select:hover {
+  border-color: color-mix(in srgb, var(--text) 26%, transparent);
+}
+
+.filter-bar__select:focus {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--accent) 60%, transparent);
+}
+
+.filter-bar__select:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.filter-bar__chevron {
+  position: absolute;
+  top: 50%;
+  right: 11px;
+  width: 11px;
+  height: 11px;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
 /* Movie grid */
 
 .movie-grid {
@@ -358,7 +564,19 @@
 /* Empty search results */
 
 .empty-state {
-  max-width: 34em;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 26em;
+  margin: 12px auto 0;
+  text-align: center;
+}
+
+.empty-state__art {
+  width: 100%;
+  max-width: 280px;
+  height: auto;
+  margin-bottom: 12px;
 }
 
 .empty-state__title {
@@ -371,6 +589,55 @@
   margin: 0;
   font-size: 15px;
   color: var(--text-secondary);
+}
+
+.empty-state__action {
+  margin-top: 20px;
+}
+
+/* 404 page */
+
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 26em;
+  margin: 56px auto;
+  padding: 0 24px;
+  text-align: center;
+}
+
+.not-found__eyebrow {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.not-found__title {
+  margin: 0 0 10px;
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.not-found__hint {
+  margin: 0 0 28px;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+@media (max-width: 640px) {
+  .not-found {
+    margin: 36px auto;
+  }
+
+  .not-found__title {
+    font-size: 26px;
+  }
 }
 
 /* Back link */
@@ -398,21 +665,23 @@
 /* Movie detail page */
 
 .detail {
-  max-width: 860px;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  border-radius: 18px;
+  overflow: hidden;
+  background: var(--surface);
+  box-shadow: var(--modal-shadow);
 }
 
 .detail__media {
   position: relative;
-  border-radius: 18px;
-  overflow: hidden;
-  box-shadow: var(--poster-shadow);
 }
 
 .detail__backdrop {
   display: block;
   width: 100%;
   aspect-ratio: 16 / 9;
-  max-height: 400px;
   object-fit: cover;
   background-color: var(--skeleton);
 }
@@ -421,8 +690,8 @@
   aspect-ratio: 16 / 6;
 }
 
-/* Neutral scrim: keeps the poster readable against whatever image sits
-   underneath it. */
+/* Neutral scrim: keeps the poster and close button legible whatever the
+   image underneath happens to be. */
 .detail__scrim {
   position: absolute;
   inset: auto 0 0;
@@ -431,26 +700,65 @@
   pointer-events: none;
 }
 
+.detail__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: var(--badge-bg);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  color: var(--text);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.detail__close svg {
+  width: 18px;
+  height: 18px;
+}
+
+.detail__close:hover {
+  color: var(--accent);
+}
+
+.detail__close:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.detail__content {
+  /* Establishes its own stacking context so the poster — which overlaps up
+     into the media area via a negative margin — reliably paints above the
+     backdrop image, and above the trailer <iframe> once it replaces it.
+     Browsers often composite iframes on their own layer, which can otherwise
+     make them cover later, non-positioned siblings regardless of DOM order. */
+  position: relative;
+  z-index: 1;
+  padding: 20px 30px 32px;
+}
+
 .detail__head {
   display: flex;
   align-items: flex-end;
-  gap: 22px;
-  margin-bottom: 20px;
-  padding: 0 4px;
+  gap: 18px;
+  margin-bottom: 14px;
 }
 
 .detail__poster {
   flex: none;
-  width: 132px;
-  /* Inset from the left edge so the poster floats over the image instead of
-     sitting on its rounded corner. */
-  margin-left: 20px;
-  margin-top: -74px;
-  border-radius: 12px;
-  box-shadow: 0 12px 28px rgb(0 0 0 / 30%);
+  width: 104px;
+  margin-top: -62px;
+  border-radius: 10px;
+  box-shadow: 0 10px 24px rgb(0 0 0 / 30%);
   outline: 1px solid var(--hairline);
   outline-offset: -1px;
-  background-color: var(--skeleton);
 }
 
 .detail__headline {
@@ -459,23 +767,22 @@
 }
 
 .detail__title {
-  margin: 0 0 6px;
-  font-size: 34px;
+  margin: 0 0 5px;
+  font-size: 25px;
   font-weight: 600;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
 }
 
-.detail__tagline {
-  margin: 0 0 8px;
-  font-size: 16px;
-  font-style: italic;
+.detail__subline {
+  margin: 0;
+  font-size: 13.5px;
   color: var(--text-secondary);
 }
 
-.detail__meta {
-  margin: 0;
-  font-size: 14px;
+.detail__original {
+  margin: 0 0 16px;
+  font-size: 13px;
   color: var(--text-secondary);
 }
 
@@ -483,8 +790,8 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 0 0 32px;
-  padding: 0 4px;
+  margin: 0 0 20px;
+  padding: 0;
   list-style: none;
 }
 
@@ -497,82 +804,187 @@
   color: var(--text-secondary);
 }
 
-.detail__section {
-  margin-bottom: 32px;
-  padding: 0 4px;
-}
-
-.detail__section-title {
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-}
-
 .detail__overview {
   margin: 0;
-  max-width: 62ch;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
+  color: var(--text);
 }
 
-.detail__facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 18px 32px;
-  margin: 0;
-}
-
-.detail__fact {
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
-}
-
-.detail__fact dt {
-  margin-bottom: 4px;
-  font-size: 13px;
+.detail__meta {
+  margin: 4px 0 0;
+  font-size: 13.5px;
   color: var(--text-secondary);
 }
 
-.detail__fact dd {
-  margin: 0;
-  font-size: 15px;
-  line-height: 1.45;
+.detail__tagline {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--text-secondary);
 }
 
-.skeleton-block {
-  background-color: var(--skeleton);
-  animation: pulse 1.6s ease-in-out infinite;
+/* Trailer play button: sits centered on the backdrop, styled like the
+   close button so the two read as one family of controls. */
+
+.detail__play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 50%;
+  background: var(--badge-bg);
+  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  color: var(--text);
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    color 0.2s ease;
 }
 
-.detail__backdrop.skeleton-block {
-  border-radius: 18px;
+.detail__play svg {
+  width: 20px;
+  height: 20px;
+  margin-left: 2px;
 }
 
-.detail__poster.skeleton-block {
-  aspect-ratio: 2 / 3;
+.detail__play:hover {
+  transform: translate(-50%, -50%) scale(1.06);
+  color: var(--accent);
+}
+
+.detail__play:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.detail__trailer {
+  display: block;
+  border: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .skeleton-block {
+  .detail__play:hover {
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Cast */
+
+.cast-row {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  margin: 28px 0 0;
+  padding: 0 0 6px;
+  list-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cast-row__item {
+  flex: none;
+  width: 92px;
+}
+
+.cast-row__item--skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cast-row__photo {
+  display: block;
+  width: 92px;
+  height: 92px;
+  margin-bottom: 8px;
+  border-radius: 50%;
+  object-fit: cover;
+  background-color: var(--skeleton);
+}
+
+.cast-row__photo--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+}
+
+.cast-row__photo--empty svg {
+  width: 34px;
+  height: 34px;
+}
+
+.cast-row__photo--skeleton {
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.cast-row__name {
+  display: block;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.cast-row__character {
+  display: block;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--text-secondary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cast-row__photo--skeleton {
     animation: none;
     opacity: 0.6;
   }
 }
 
+/* Similar movies */
+
+.detail__similar {
+  margin-top: 32px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
+}
+
+.detail__similar-title {
+  margin: 0 0 16px;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.detail__similar-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
 @media (max-width: 640px) {
+  .detail__content {
+    padding: 18px 22px 26px;
+  }
+
+  /* At phone width the poster, title and rating ring can't share one
+     row without squeezing the title, so the title block wraps under
+     them and takes the full width. */
   .detail__head {
     flex-wrap: wrap;
-    gap: 16px;
-    row-gap: 14px;
+    gap: 14px;
+    row-gap: 12px;
   }
 
   .detail__poster {
     order: 1;
-    width: 96px;
-    margin-top: -52px;
   }
 
   .detail__head > .rating-ring {
@@ -585,36 +997,16 @@
     flex: 0 0 100%;
   }
 
-  .detail__title {
-    font-size: 26px;
+  .detail__poster {
+    width: 78px;
+    margin-top: -44px;
   }
-}
 
-/* Not found */
+  .detail__title {
+    font-size: 21px;
+  }
 
-.not-found {
-  max-width: 34em;
-  padding: 40px 0 24px;
-}
-
-.not-found__code {
-  margin: 0 0 12px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  color: var(--text-secondary);
-}
-
-.not-found__title {
-  margin: 0 0 10px;
-  font-size: 34px;
-  font-weight: 600;
-  letter-spacing: -0.02em;
-}
-
-.not-found__text {
-  margin: 0 0 24px;
-  font-size: 17px;
-  line-height: 1.5;
-  color: var(--text-secondary);
+  .detail__similar-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }

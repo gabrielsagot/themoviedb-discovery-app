@@ -4,23 +4,30 @@ import { describe, expect, it, vi } from 'vitest';
 // back-end registers, so the test can inspect the routes without ever opening
 // a real port. Plain arrays are used rather than vi.fn() spies because Vitest
 // resets mocks between tests, which would wipe the calls made at import time.
-const { mockApp, registeredPaths, listenCalls } = vi.hoisted(() => {
-  const registeredPaths: string[] = [];
-  const listenCalls: Array<{ port: number; callback: unknown }> = [];
+const { mockApp, registeredPaths, middlewares, listenCalls } = vi.hoisted(
+  () => {
+    const registeredPaths: string[] = [];
+    const middlewares: unknown[] = [];
+    const listenCalls: Array<{ port: number; callback: unknown }> = [];
 
-  return {
-    registeredPaths,
-    listenCalls,
-    mockApp: {
-      get: (path: string) => {
-        registeredPaths.push(path);
+    return {
+      registeredPaths,
+      middlewares,
+      listenCalls,
+      mockApp: {
+        get: (path: string) => {
+          registeredPaths.push(path);
+        },
+        use: (middleware: unknown) => {
+          middlewares.push(middleware);
+        },
+        listen: (port: number, callback: unknown) => {
+          listenCalls.push({ port, callback });
+        },
       },
-      listen: (port: number, callback: unknown) => {
-        listenCalls.push({ port, callback });
-      },
-    },
-  };
-});
+    };
+  },
+);
 
 vi.mock('express', () => ({
   default: () => mockApp,
@@ -47,6 +54,12 @@ describe('back-end server routes', () => {
     });
   });
 
+  describe('unknown routes', () => {
+    it('registers a catch-all handler after every route', () => {
+      expect(middlewares).toHaveLength(1);
+    });
+  });
+
   describe('route ordering', () => {
     it('registers /api/movies/search before the dynamic /api/movies/:id', () => {
       expect(registeredPaths.indexOf('/api/movies/search')).toBeLessThan(
@@ -57,6 +70,10 @@ describe('back-end server routes', () => {
 
   describe('route registration', () => {
     it('registers the /api/movies/popular route', () => {
+      expect(registeredPaths).toContain('/api/movies/popular');
+    });
+
+    it('registers the /api/movies/popular route with its filters', () => {
       expect(registeredPaths).toContain('/api/movies/popular');
     });
 
