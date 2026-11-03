@@ -33,36 +33,70 @@ describe('backend-cli.ts', () => {
     vi.resetModules();
   });
 
-  describe('create-database', () => {
-    it('uses the default database path when the subcommand has no path option', async () => {
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      try {
-        await runCliWithArgs(['create-database']);
+  /**
+   * Runs the CLI with the given arguments and checks that it created the
+   * database at the expected path, closed it and reported its location.
+   * @param args The command-line arguments to pass to the CLI.
+   * @param expectedPath The database path the CLI is expected to use.
+   */
+  async function expectDatabaseCreated(
+    args: string[],
+    expectedPath: string,
+  ): Promise<void> {
+    const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    try {
+      await runCliWithArgs(args);
 
-        expect(getDatabaseMock).toHaveBeenCalledWith(DEFAULT_DATABASE_PATH);
-        expect(closeMock).toHaveBeenCalledOnce();
-        expect(logSpy).toHaveBeenCalledWith(
-          `Database available at ${resolve(DEFAULT_DATABASE_PATH)}`,
-        );
-      } finally {
-        logSpy.mockRestore();
-      }
+      expect(getDatabaseMock).toHaveBeenCalledOnce();
+      expect(getDatabaseMock).toHaveBeenCalledWith(expectedPath);
+      expect(closeMock).toHaveBeenCalledOnce();
+      expect(logSpy).toHaveBeenCalledWith(
+        `Database available at ${resolve(expectedPath)}`,
+      );
+    } finally {
+      logSpy.mockRestore();
+    }
+  }
+
+  const customDatabasePath = './data/custom-movies.sqlite';
+
+  describe('without a command', () => {
+    it('creates and initializes the default database', async () => {
+      await expectDatabaseCreated([], DEFAULT_DATABASE_PATH);
     });
 
-    it('uses the path passed in --path', async () => {
-      const customDatabasePath = './data/custom-movies.sqlite';
-      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      try {
-        await runCliWithArgs(['create-database', '--path', customDatabasePath]);
+    it('creates and initializes the database passed in --path', async () => {
+      await expectDatabaseCreated(
+        ['--path', customDatabasePath],
+        customDatabasePath,
+      );
+    });
 
-        expect(getDatabaseMock).toHaveBeenCalledWith(customDatabasePath);
-        expect(closeMock).toHaveBeenCalledOnce();
-        expect(logSpy).toHaveBeenCalledWith(
-          `Database available at ${resolve(customDatabasePath)}`,
-        );
-      } finally {
-        logSpy.mockRestore();
-      }
+    it('accepts the short -p option', async () => {
+      await expectDatabaseCreated(
+        ['-p', customDatabasePath],
+        customDatabasePath,
+      );
+    });
+  });
+
+  describe('create-database', () => {
+    it('uses the default database path when no path option is given', async () => {
+      await expectDatabaseCreated(['create-database'], DEFAULT_DATABASE_PATH);
+    });
+
+    it('uses the path passed in --path after the command', async () => {
+      await expectDatabaseCreated(
+        ['create-database', '--path', customDatabasePath],
+        customDatabasePath,
+      );
+    });
+
+    it('uses the path passed in --path before the command', async () => {
+      await expectDatabaseCreated(
+        ['--path', customDatabasePath, 'create-database'],
+        customDatabasePath,
+      );
     });
   });
 });

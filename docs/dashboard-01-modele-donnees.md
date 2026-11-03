@@ -333,15 +333,15 @@ déjà présent sur `develop`, a été comparé à ce modèle. Un script de cont
 | Écriture directe de `release_year`                                      | ✅ Refusée (colonne générée)                 |
 | Suppression d'un genre utilisé / inutilisé                              | ✅ Refusée / acceptée                        |
 | Suppression d'un film                                                   | ✅ Associations supprimées en cascade        |
-| `release_date` réduite à l'année (`'2020'`)                             | ⚠️ Année calculée : **-4707**                |
+| `release_date` réduite à l'année (`'2020'`)                             | ✅ Corrigé (DASHBOARD-02) : année `NULL`     |
 | Code pays hors format ISO (`'fra'`)                                     | ⚠️ Accepté                                   |
 
 ### Points d'attention pour la suite
 
 - **Date partielle** : SQLite lit `'2020'` comme un numéro de jour julien, pas
-  comme une année. TMDB renvoie normalement `AAAA-MM-JJ` ou une chaîne vide,
-  mais le collecteur doit **normaliser** la date : chaîne vide ou format
-  différent de `AAAA-MM-JJ` → `NULL` (RG8).
+  comme une année. **Corrigé dans DASHBOARD-02** : `release_year` n'est
+  désormais dérivée que d'une date `AAAA-MM-JJ` complète et valide ; toute autre
+  valeur laisse l'année à `NULL` (RG8).
 - **Format des codes pays** : la base n'impose pas deux lettres majuscules
   (RG3). La validation est prévue à l'import CSV (DASHBOARD-06) et doit aussi
   être appliquée par le collecteur.

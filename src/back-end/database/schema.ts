@@ -77,8 +77,17 @@ function initializeMoviesSchema(database: DatabaseSync): void {
       overview TEXT NOT NULL,
       -- The release date of the movie as TEXT in the format 'YYYY-MM-DD'; SQLite has no dedicated DATE type
       release_date TEXT,
-      -- The year of the movie's release, generated from the release_date
-      release_year INTEGER GENERATED ALWAYS AS (CAST(strftime('%Y', release_date) AS INTEGER)) STORED,
+      -- The year of the movie's release, generated from the release_date.
+      -- Only a complete, valid 'YYYY-MM-DD' date yields a year: an empty,
+      -- partial ('2020') or invalid date leaves the year unknown (NULL)
+      -- instead of letting SQLite read it as a Julian day number.
+      release_year INTEGER GENERATED ALWAYS AS (
+        CASE
+          WHEN release_date GLOB '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'
+            AND date(release_date) = release_date
+          THEN CAST(substr(release_date, 1, 4) AS INTEGER)
+        END
+      ) STORED,
       -- The popularity score of the movie
       popularity REAL,
       -- The average vote score of the movie
