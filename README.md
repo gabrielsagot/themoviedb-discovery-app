@@ -79,6 +79,7 @@ Le module `src/back-end/database/genre-repository.ts` lit et écrit les genres d
 | `findGenreById(database, id)`    | Renvoie le genre correspondant, ou `undefined` s'il n'existe pas.                       |
 | `listGenres(database)`           | Renvoie tous les genres, triés par identifiant croissant.                               |
 | `upsertGenres(database, genres)` | Insère les nouveaux genres et met à jour le libellé des genres existants, sans doublon. |
+| `deleteUnusedGenres(database)`   | Supprime les genres associés à aucun film et renvoie leur nombre.                       |
 
 `upsertGenres` accepte n'importe quel itérable (tableau, `Set`, valeurs d'une `Map`, générateur). Un itérable vide ne modifie rien ; si un identifiant apparaît plusieurs fois, le dernier libellé est conservé. Les écritures sont groupées : si un genre est invalide (nom manquant), aucun genre du lot n'est enregistré et l'erreur est propagée.
 
@@ -97,6 +98,37 @@ upsertGenres(database, [
 console.log(listGenres(database)); // [{ id: 12, name: 'Aventure' }, { id: 35, name: 'Comédie' }]
 database.close();
 ```
+
+### Importer et nettoyer les genres
+
+Le fichier CSV contient exactement les colonnes `id` et `name`, dans n'importe quel ordre et sans distinction de casse. Un exemple avec les 19 genres TMDB en français est fourni dans [data/genres.csv](data/genres.csv) :
+
+```csv
+id,name
+12,Aventure
+35,Comédie
+878,Science-Fiction
+```
+
+Le parseur accepte les fins de ligne LF et CRLF, le BOM UTF-8, les virgules dans les champs entre guillemets (`"Familial, jeunesse"`) et les guillemets échappés (`""`) ; les lignes vides sont ignorées. Les identifiants doivent être des entiers positifs et les noms ne peuvent pas être vides.
+
+Importer ou actualiser les genres, dans la base par défaut ou celle choisie avec `--path` :
+
+```sh
+node src/back-end/backend-cli.ts add-genres ./data/genres.csv
+node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite add-genres ./data/genres.csv
+```
+
+Le CSV est entièrement validé avant l'ouverture de la base, puis importé dans une seule transaction : un genre existant voit son libellé mis à jour, sans doublon, et en cas d'erreur aucun genre n'est enregistré. La commande affiche le nombre de genres importés et le chemin de la base.
+
+Supprimer les genres associés à aucun film (ceux utilisés par au moins un film sont conservés) :
+
+```sh
+node src/back-end/backend-cli.ts clean-genres
+node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite clean-genres
+```
+
+En cas d'erreur (fichier introuvable, en-tête ou valeur invalide, échec d'écriture), le CLI affiche `error: <message>` sur la sortie d'erreur et se termine avec le code 1.
 
 ## API locale
 
