@@ -48,19 +48,27 @@ Le serveur Express écoute sur le port `3000`. Vite sert l'interface sur le port
 
 Le modèle de données (dictionnaire, règles de gestion, MCD, schéma relationnel et contraintes d'intégrité) est décrit dans [docs/dashboard-01-modele-donnees.md](docs/dashboard-01-modele-donnees.md).
 
-Après l'installation des dépendances, créez et initialisez la base SQLite avec le CLI du backend :
+Après l'installation des dépendances, créez et initialisez la base SQLite avec le CLI du backend. Sans commande, le CLI crée la base par défaut `data/movies.sqlite` :
 
 ```sh
-npx tsx src/back-end/backend-cli.ts create-database
+node src/back-end/backend-cli.ts
 ```
 
-Par défaut, le fichier `data/movies.sqlite` est créé avec le schéma nécessaire. Pour choisir un autre emplacement, utilisez l'option `--path` :
+L'option globale `--path` (ou `-p`) sélectionne un autre fichier SQLite ; les dossiers manquants sont créés :
 
 ```sh
-npx tsx src/back-end/backend-cli.ts create-database --path ./data/ma-base.sqlite
+node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite
 ```
 
-La commande initialise le schéma sans supprimer les données d'une base existante.
+La commande explicite `create-database` est équivalente et accepte `--path` avant ou après son nom :
+
+```sh
+node src/back-end/backend-cli.ts create-database --path ./data/custom-movies.sqlite
+```
+
+L'initialisation est transactionnelle : elle crée les tables manquantes sans supprimer les données d'une base existante, et une erreur annule toutes les modifications.
+
+Le schéma contient les tables `movies`, `genres`, `countries`, `movie_genres` et `production_countries`. L'année de sortie `release_year` est calculée automatiquement à partir d'une date `release_date` complète (`AAAA-MM-JJ`) et reste vide sinon ; les durées, budgets et recettes renseignés doivent être strictement positifs.
 
 ## API locale
 
