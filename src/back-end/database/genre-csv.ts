@@ -1,4 +1,5 @@
 import { parse } from 'csv-parse/sync';
+import { readFileSync } from 'node:fs';
 import type { Genre } from '../types/DatabaseTypes.ts';
 
 // The columns a genres CSV must contain, exactly once each, in any order.
@@ -91,4 +92,22 @@ export function parseGenresCsv(content: string): Genre[] {
   }
 
   return rows.map(({ record, info }) => toGenre(record, info.lines));
+}
+
+/**
+ * Reads a genres CSV file as UTF-8 and parses it with `parseGenresCsv`.
+ * @param filePath The path to the CSV file.
+ * @returns The genres, in file order.
+ * @throws {GenreCsvError} When the file cannot be read or its content is invalid.
+ */
+export function readGenresCsv(filePath: string): Genre[] {
+  let content: string;
+  try {
+    content = readFileSync(filePath, 'utf8');
+  } catch (error) {
+    throw new GenreCsvError(
+      `Cannot read genres CSV "${filePath}": ${(error as Error).message}`,
+    );
+  }
+  return parseGenresCsv(content);
 }

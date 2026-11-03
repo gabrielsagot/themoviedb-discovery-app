@@ -1,5 +1,8 @@
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { GenreCsvError, parseGenresCsv } from './genre-csv';
+import { GenreCsvError, parseGenresCsv, readGenresCsv } from './genre-csv';
 
 // The UTF-8 byte order mark, written as an escape so it stays visible.
 const BOM = String.fromCharCode(0xfeff);
@@ -148,6 +151,51 @@ describe('genre-csv.ts', () => {
           /^Invalid genres CSV: Invalid Record Length/,
         );
       });
+    });
+  });
+  describe('readGenresCsv', () => {
+    /**
+     * Writes a CSV document to a new temporary file.
+     * @param content The CSV document.
+     * @returns The path to the file.
+     */
+    function writeCsvFile(content: string): string {
+      const filePath = join(
+        mkdtempSync(join(tmpdir(), 'genres-csv-')),
+        'genres.csv',
+      );
+      writeFileSync(filePath, content, 'utf8');
+      return filePath;
+    }
+
+    it('reads and parses a UTF-8 genres file', () => {
+      const filePath = writeCsvFile(
+        `${BOM}id,name\r\n35,Comédie\r\n878,Science-Fiction\r\n`,
+      );
+
+      expect(readGenresCsv(filePath)).toEqual([
+        { id: 35, name: 'Comédie' },
+        { id: 878, name: 'Science-Fiction' },
+      ]);
+    });
+
+    it('propagates the validation errors of the file content', () => {
+      const filePath = writeCsvFile('id,label\n35,Comédie\n');
+
+      expect(() => readGenresCsv(filePath)).toThrow(GenreCsvError);
+    });
+
+    it('reports a file that cannot be read', () => {
+      const filePath = join(
+        tmpdir(),
+        'missing-directory-for-genres',
+        'genres.csv',
+      );
+
+      expect(() => readGenresCsv(filePath)).toThrow(GenreCsvError);
+      expect(() => readGenresCsv(filePath)).toThrow(
+        `Cannot read genres CSV "${filePath}": ENOENT`,
+      );
     });
   });
 });
