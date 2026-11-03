@@ -73,6 +73,71 @@ describe('genre-repository.ts', () => {
       expect(listGenres(database)).toEqual([{ id: 35, name: 'Comédie' }]);
     });
 
+    it('accepts a Set of genres', () => {
+      upsertGenres(
+        database,
+        new Set([
+          { id: 28, name: 'Action' },
+          { id: 16, name: 'Animation' },
+        ]),
+      );
+
+      expect(listGenres(database)).toEqual([
+        { id: 16, name: 'Animation' },
+        { id: 28, name: 'Action' },
+      ]);
+    });
+
+    it('accepts the values of a Map', () => {
+      const genresById = new Map([
+        [35, { id: 35, name: 'Comédie' }],
+        [18, { id: 18, name: 'Drame' }],
+      ]);
+
+      upsertGenres(database, genresById.values());
+
+      expect(listGenres(database)).toEqual([
+        { id: 18, name: 'Drame' },
+        { id: 35, name: 'Comédie' },
+      ]);
+    });
+
+    it('accepts a generator of genres', () => {
+      function* tmdbGenres() {
+        yield { id: 12, name: 'Aventure' };
+        yield { id: 14, name: 'Fantastique' };
+      }
+
+      upsertGenres(database, tmdbGenres());
+
+      expect(listGenres(database)).toEqual([
+        { id: 12, name: 'Aventure' },
+        { id: 14, name: 'Fantastique' },
+      ]);
+    });
+
+    it('leaves the data unchanged when given an empty iterable', () => {
+      upsertGenres(database, [{ id: 18, name: 'Drame' }]);
+
+      upsertGenres(database, []);
+      upsertGenres(database, new Set());
+
+      expect(listGenres(database)).toEqual([{ id: 18, name: 'Drame' }]);
+    });
+
+    it('keeps the last name given when an id appears several times', () => {
+      upsertGenres(database, [
+        { id: 35, name: 'Comedy' },
+        { id: 18, name: 'Drame' },
+        { id: 35, name: 'Comédie' },
+      ]);
+
+      expect(listGenres(database)).toEqual([
+        { id: 18, name: 'Drame' },
+        { id: 35, name: 'Comédie' },
+      ]);
+    });
+
     it('rejects a genre without a name and keeps none of the batch', () => {
       upsertGenres(database, [{ id: 18, name: 'Drame' }]);
 

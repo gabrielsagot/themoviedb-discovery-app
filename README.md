@@ -70,6 +70,34 @@ L'initialisation est transactionnelle : elle crée les tables manquantes sans su
 
 Le schéma contient les tables `movies`, `genres`, `countries`, `movie_genres` et `production_countries`. L'année de sortie `release_year` est calculée automatiquement à partir d'une date `release_date` complète (`AAAA-MM-JJ`) et reste vide sinon ; les durées, budgets et recettes renseignés doivent être strictement positifs.
 
+### Gestion des genres
+
+Le module `src/back-end/database/genre-repository.ts` lit et écrit les genres de la base. Un genre (type `Genre`) est identifié par son code TMDB `id` et porte un libellé `name`.
+
+| Fonction                         | Rôle                                                                                    |
+| -------------------------------- | --------------------------------------------------------------------------------------- |
+| `findGenreById(database, id)`    | Renvoie le genre correspondant, ou `undefined` s'il n'existe pas.                       |
+| `listGenres(database)`           | Renvoie tous les genres, triés par identifiant croissant.                               |
+| `upsertGenres(database, genres)` | Insère les nouveaux genres et met à jour le libellé des genres existants, sans doublon. |
+
+`upsertGenres` accepte n'importe quel itérable (tableau, `Set`, valeurs d'une `Map`, générateur). Un itérable vide ne modifie rien ; si un identifiant apparaît plusieurs fois, le dernier libellé est conservé. Les écritures sont groupées : si un genre est invalide (nom manquant), aucun genre du lot n'est enregistré et l'erreur est propagée.
+
+```ts
+import { getDatabase } from './src/back-end/database/schema.ts';
+import {
+  listGenres,
+  upsertGenres,
+} from './src/back-end/database/genre-repository.ts';
+
+const database = getDatabase();
+upsertGenres(database, [
+  { id: 35, name: 'Comédie' },
+  { id: 12, name: 'Aventure' },
+]);
+console.log(listGenres(database)); // [{ id: 12, name: 'Aventure' }, { id: 35, name: 'Comédie' }]
+database.close();
+```
+
 ## API locale
 
 | Méthode | Route                 | Description                                                       |
