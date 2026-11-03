@@ -46,6 +46,8 @@ Le serveur Express écoute sur le port `3000`. Vite sert l'interface sur le port
 
 ## Création de la base de données
 
+Le modèle de données (dictionnaire, règles de gestion, MCD, schéma relationnel et contraintes d'intégrité) est décrit dans [docs/dashboard-01-modele-donnees.md](docs/dashboard-01-modele-donnees.md).
+
 Après l'installation des dépendances, créez et initialisez la base SQLite avec le CLI du backend :
 
 ```sh
