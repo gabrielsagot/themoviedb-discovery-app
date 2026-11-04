@@ -48,6 +48,22 @@ describe('country-repository.ts', () => {
     it('returns an empty list when no country is stored', () => {
       expect(listCountries(database)).toEqual([]);
     });
+
+    it('returns the countries sorted by ascending code', () => {
+      upsertCountries(database, [
+        { code: 'US', name: 'États-Unis' },
+        { code: 'BE', name: 'Belgique' },
+        { code: 'FR', name: 'France' },
+        { code: 'GB', name: 'Royaume-Uni' },
+      ]);
+
+      expect(listCountries(database).map((country) => country.code)).toEqual([
+        'BE',
+        'FR',
+        'GB',
+        'US',
+      ]);
+    });
   });
 
   describe('upsertCountries', () => {
@@ -70,6 +86,71 @@ describe('country-repository.ts', () => {
       upsertCountries(database, [{ code: 'US', name: 'États-Unis' }]);
 
       expect(listCountries(database)).toEqual([
+        { code: 'US', name: 'États-Unis' },
+      ]);
+    });
+
+    it('accepts a Set of countries', () => {
+      upsertCountries(
+        database,
+        new Set([
+          { code: 'FR', name: 'France' },
+          { code: 'BE', name: 'Belgique' },
+        ]),
+      );
+
+      expect(listCountries(database)).toEqual([
+        { code: 'BE', name: 'Belgique' },
+        { code: 'FR', name: 'France' },
+      ]);
+    });
+
+    it('accepts the values of a Map', () => {
+      const countriesByCode = new Map([
+        ['GB', { code: 'GB', name: 'Royaume-Uni' }],
+        ['DE', { code: 'DE', name: 'Allemagne' }],
+      ]);
+
+      upsertCountries(database, countriesByCode.values());
+
+      expect(listCountries(database)).toEqual([
+        { code: 'DE', name: 'Allemagne' },
+        { code: 'GB', name: 'Royaume-Uni' },
+      ]);
+    });
+
+    it('accepts a generator of countries', () => {
+      function* productionCountries() {
+        yield { code: 'JP', name: 'Japon' };
+        yield { code: 'KR', name: 'Corée du Sud' };
+      }
+
+      upsertCountries(database, productionCountries());
+
+      expect(listCountries(database)).toEqual([
+        { code: 'JP', name: 'Japon' },
+        { code: 'KR', name: 'Corée du Sud' },
+      ]);
+    });
+
+    it('leaves the data unchanged when given an empty iterable', () => {
+      upsertCountries(database, [{ code: 'FR', name: 'France' }]);
+
+      upsertCountries(database, []);
+      upsertCountries(database, new Set());
+
+      expect(listCountries(database)).toEqual([{ code: 'FR', name: 'France' }]);
+    });
+
+    it('keeps the last name given when a code appears several times', () => {
+      upsertCountries(database, [
+        { code: 'US', name: 'United States of America' },
+        { code: 'FR', name: 'France' },
+        { code: 'US', name: 'États-Unis' },
+      ]);
+
+      expect(listCountries(database)).toEqual([
+        { code: 'FR', name: 'France' },
         { code: 'US', name: 'États-Unis' },
       ]);
     });
