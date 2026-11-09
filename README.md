@@ -132,17 +132,60 @@ En cas d'erreur (fichier introuvable, en-tête ou valeur invalide, échec d'écr
 
 ## API locale
 
-| Méthode | Route                 | Description                                                       |
-| ------- | --------------------- | ----------------------------------------------------------------- |
-| `GET`   | `/api/health`         | Vérifie que le serveur répond.                                    |
-| `GET`   | `/api/movies/popular` | Renvoie les films populaires.                                     |
-| `GET`   | `/api/movies/:id`     | Renvoie les détails du film correspondant à son identifiant TMDB. |
+| Méthode | Route                  | Description                                                         |
+| ------- | ---------------------- | ------------------------------------------------------------------- |
+| `GET`   | `/api/health`          | Vérifie que le serveur répond.                                      |
+| `GET`   | `/api/movies/popular`  | Renvoie les films populaires.                                       |
+| `GET`   | `/api/movies/:id`      | Renvoie les détails du film correspondant à son identifiant TMDB.   |
+| `GET`   | `/api/discover/movies` | Renvoie une page des films sortis une année donnée (TMDB Discover). |
 
 Les routes des films acceptent les paramètres `language`, `page` et `region`. Exemple :
 
 ```text
 /api/movies/popular?language=fr-FR&page=1&region=FR
 ```
+
+### Films par année de sortie
+
+`GET /api/discover/movies` interroge l'API TMDB Discover (`GET /3/discover/movie`) avec le filtre `primary_release_year` et renvoie **une seule page** de films sortis l'année demandée. La route ne parcourt pas automatiquement les autres pages, ne récupère pas le détail des films et n'écrit rien dans la base SQLite.
+
+| Paramètre  | Obligatoire | Valeur par défaut | Description                                            |
+| ---------- | ----------- | ----------------- | ------------------------------------------------------ |
+| `year`     | Oui         | —                 | Année de sortie : quatre chiffres, de `1000` à `9999`. |
+| `language` | Non         | `fr-FR`           | Langue des titres et résumés.                          |
+| `page`     | Non         | `1`               | Page de résultats à consulter.                         |
+| `region`   | Non         | `FR`              | Région utilisée par TMDB pour les dates de sortie.     |
+
+Un paramètre optionnel vide, répété ou structuré reprend sa valeur par défaut. Exemples :
+
+```text
+/api/discover/movies?year=2020
+/api/discover/movies?year=2020&language=en-US&page=2&region=US
+```
+
+La réponse conserve la pagination de TMDB ; chaque film est au même format que pour `/api/movies/popular` (sans les propriétés `adult` et `video`), et une année sans film renvoie une liste `results` vide :
+
+```json
+{
+  "page": 2,
+  "results": [
+    { "id": 496243, "title": "Parasite", "release_date": "2019-05-30" }
+  ],
+  "total_pages": 12,
+  "total_results": 231
+}
+```
+
+Pour parcourir une année, appeler la route avec `page=1`, puis `page=2`, etc., jusqu'à `total_pages`.
+
+Erreurs :
+
+| Statut | Cas                                                                                                 | Corps de la réponse                        |
+| ------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| `400`  | `year` absent, invalide, répété ou structuré (TMDB n'est pas appelé)                                | `{ "error": "<message explicite>" }`       |
+| `500`  | Échec HTTP de TMDB, erreur réseau ou réponse JSON illisible (l'erreur est journalisée côté serveur) | `{ "error": "Failed to discover movies" }` |
+
+Le jeton TMDB reste côté serveur : il n'est envoyé qu'à TMDB et n'apparaît jamais dans les réponses.
 
 ## Vérifications
 
