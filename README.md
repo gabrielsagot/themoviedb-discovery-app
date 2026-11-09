@@ -139,6 +139,7 @@ Le module `src/back-end/database/country-repository.ts` lit et écrit les pays d
 | `findCountryByCode(database, code)`    | Renvoie le pays correspondant, ou `undefined` s'il n'existe pas.                    |
 | `listCountries(database)`              | Renvoie tous les pays, triés par code croissant (liste vide si aucun pays).         |
 | `upsertCountries(database, countries)` | Insère les nouveaux pays et met à jour le libellé des pays existants, sans doublon. |
+| `deleteUnusedCountries(database)`      | Supprime les pays associés à aucun film et renvoie leur nombre.                     |
 
 `upsertCountries` accepte n'importe quel itérable (tableau, `Set`, valeurs d'une `Map`, générateur). Un itérable vide ne modifie rien ; si un code apparaît plusieurs fois, le dernier libellé est conservé. Les écritures sont groupées : si un pays est invalide (nom manquant), aucun pays du lot n'est enregistré et l'erreur est propagée.
 
@@ -156,6 +157,35 @@ upsertCountries(database, [
 ]);
 console.log(listCountries(database)); // [{ code: 'BE', name: 'Belgique' }, { code: 'FR', name: 'France' }]
 database.close();
+```
+
+### Importer et nettoyer les pays
+
+Le fichier CSV contient exactement les colonnes `code` et `name`, dans n'importe quel ordre et sans distinction de casse. Les codes sont au format ISO 3166-1 alpha-2 : exactement deux lettres majuscules (`FR`, `GB`, `US`). Un exemple avec 30 pays de production courants est fourni dans [data/countries.csv](data/countries.csv) :
+
+```csv
+code,name
+FR,France
+GB,Royaume-Uni
+US,États-Unis
+```
+
+Le parseur accepte les fins de ligne LF et CRLF, le BOM UTF-8, les espaces autour des valeurs, les virgules dans les champs entre guillemets et les guillemets échappés ; les lignes vides sont ignorées et un fichier ne contenant que l'en-tête n'importe aucun pays. Un code en minuscules (`fr`), de trois lettres (`FRA`) ou un nom vide provoquent une erreur qui indique la ligne concernée.
+
+Importer ou actualiser les pays, dans la base par défaut ou celle choisie avec `--path` :
+
+```sh
+node src/back-end/backend-cli.ts add-countries ./data/countries.csv
+node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite add-countries ./data/countries.csv
+```
+
+Comme pour les genres, le CSV est entièrement validé avant l'ouverture de la base, puis importé dans une seule transaction : un pays existant voit son libellé mis à jour, sans doublon, et en cas d'erreur aucun pays n'est enregistré. La commande affiche le nombre de pays importés et le chemin de la base.
+
+Supprimer les pays associés à aucun film dans `production_countries` (ceux utilisés par au moins un film sont conservés) :
+
+```sh
+node src/back-end/backend-cli.ts clean-countries
+node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite clean-countries
 ```
 
 ## API locale
