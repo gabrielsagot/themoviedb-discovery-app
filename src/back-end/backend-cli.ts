@@ -2,13 +2,18 @@
 import { Command } from 'commander';
 import { resolve } from 'node:path';
 import type { DatabaseSync } from 'node:sqlite';
+import { readCountriesCsv } from './database/country-csv.ts';
+import {
+  deleteUnusedCountries,
+  upsertCountries,
+} from './database/country-repository.ts';
 import { readGenresCsv } from './database/genre-csv.ts';
 import {
   deleteUnusedGenres,
   upsertGenres,
 } from './database/genre-repository.ts';
 import { DEFAULT_DATABASE_PATH, getDatabase } from './database/schema.ts';
-import type { Genre } from './types/DatabaseTypes.ts';
+import type { Country, Genre } from './types/DatabaseTypes.ts';
 
 /** Options shared by every command of the CLI. */
 type GlobalOptions = {
@@ -19,11 +24,12 @@ type GlobalOptions = {
  * Formats a count followed by a noun, singular for exactly 1, plural otherwise
  * (English uses the plural for 0).
  * @param count The number of items.
- * @param noun The singular noun.
- * @returns The count and the noun, e.g. "1 genre" or "19 genres".
+ * @param singular The singular form, e.g. "country".
+ * @param plural The plural form, e.g. "countries".
+ * @returns The count and the noun, e.g. "1 country" or "0 countries".
  */
-function pluralize(count: number, noun: string): string {
-  return `${count} ${noun}${count === 1 ? '' : 's'}`;
+function pluralize(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
 }
 
 /**
@@ -53,8 +59,10 @@ function createDatabase(path: string): void {
 
 /** Describes how to import and clean one catalog of the database. */
 type CatalogCommands<T> = {
-  /** Singular name of a record, used in messages (e.g. "genre"). */
+  /** Singular name of a record, used in messages (e.g. "country"). */
   noun: string;
+  /** Plural name of the records, used in messages (e.g. "countries"). */
+  pluralNoun: string;
   /** Reads and validates the whole CSV file. */
   readCsv: (csvFile: string) => T[];
   /** Inserts or updates the records in the database. */
@@ -68,10 +76,21 @@ type CatalogCommands<T> = {
 /** The genre catalog: identified by TMDB id. */
 const GENRE_COMMANDS: CatalogCommands<Genre> = {
   noun: 'genre',
+  pluralNoun: 'genres',
   readCsv: readGenresCsv,
   upsert: upsertGenres,
   deleteUnused: deleteUnusedGenres,
   keyOf: (genre) => genre.id,
+};
+
+/** The production country catalog: identified by ISO 3166-1 alpha-2 code. */
+const COUNTRY_COMMANDS: CatalogCommands<Country> = {
+  noun: 'country',
+  pluralNoun: 'countries',
+  readCsv: readCountriesCsv,
+  upsert: upsertCountries,
+  deleteUnused: deleteUnusedCountries,
+  keyOf: (country) => country.code,
 };
 
 /**
@@ -107,7 +126,7 @@ function importCatalog<T>(
   // A record repeated in the file is imported once, with its last name.
   const importedCount = new Set(records.map(catalog.keyOf)).size;
   console.log(
-    `Imported ${pluralize(importedCount, catalog.noun)} into ${resolve(path)}`,
+    `Imported ${pluralize(importedCount, catalog.noun, catalog.pluralNoun)} into ${resolve(path)}`,
   );
 }
 
@@ -127,7 +146,11 @@ function cleanCatalog<T>(catalog: CatalogCommands<T>, path: string): void {
   }
 
   console.log(
-    `Removed ${pluralize(deletedCount, `unused ${catalog.noun}`)} from ${resolve(path)}`,
+    `Removed ${pluralize(
+      deletedCount,
+      `unused ${catalog.noun}`,
+      `unused ${catalog.pluralNoun}`,
+    )} from ${resolve(path)}`,
   );
 }
 
@@ -175,6 +198,31 @@ program
   .action(() => {
     runCommand(() =>
       cleanCatalog(GENRE_COMMANDS, program.opts<GlobalOptions>().path),
+    );
+  });
+
+program
+  .command('add-countries')
+  .description(
+    'Insert or update the countries listed in a CSV file (code,name)',
+  )
+  .argument('<csv-file>', 'path to the countries CSV file')
+  .action((csvFile: string) => {
+    runCommand(() =>
+      importCatalog(
+        COUNTRY_COMMANDS,
+        csvFile,
+        program.opts<GlobalOptions>().path,
+      ),
+    );
+  });
+
+program
+  .command('clean-countries')
+  .description('Delete the countries that are not associated with any movie')
+  .action(() => {
+    runCommand(() =>
+      cleanCatalog(COUNTRY_COMMANDS, program.opts<GlobalOptions>().path),
     );
   });
 
