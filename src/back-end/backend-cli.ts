@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import { resolve } from 'node:path';
+import type { DatabaseSync } from 'node:sqlite';
 import { readGenresCsv } from './database/genre-csv.ts';
 import {
   deleteUnusedGenres,
   upsertGenres,
 } from './database/genre-repository.ts';
 import { DEFAULT_DATABASE_PATH, getDatabase } from './database/schema.ts';
+import type { Genre } from './types/DatabaseTypes.ts';
 
 /** Options shared by every command of the CLI. */
 type GlobalOptions = {
@@ -49,22 +51,50 @@ function createDatabase(path: string): void {
   console.log(`Database available at ${resolve(path)}`);
 }
 
+/** Describes how to import and clean one catalog of the database. */
+type CatalogCommands<T> = {
+  /** Singular name of a record, used in messages (e.g. "genre"). */
+  noun: string;
+  /** Reads and validates the whole CSV file. */
+  readCsv: (csvFile: string) => T[];
+  /** Inserts or updates the records in the database. */
+  upsert: (database: DatabaseSync, records: Iterable<T>) => void;
+  /** Deletes the records no movie uses and returns how many were deleted. */
+  deleteUnused: (database: DatabaseSync) => number;
+  /** Identifies a record, to count each repeated record once. */
+  keyOf: (record: T) => unknown;
+};
+
+/** The genre catalog: identified by TMDB id. */
+const GENRE_COMMANDS: CatalogCommands<Genre> = {
+  noun: 'genre',
+  readCsv: readGenresCsv,
+  upsert: upsertGenres,
+  deleteUnused: deleteUnusedGenres,
+  keyOf: (genre) => genre.id,
+};
+
 /**
- * Imports the genres of a CSV file into the database. The whole file is
- * validated before the database is opened, then every genre is written in a
+ * Imports the records of a CSV file into the database. The whole file is
+ * validated before the database is opened, then every record is written in a
  * single transaction: if one write fails, none is kept. The connection is
  * always closed.
- * @param csvFile The path to the genres CSV file.
+ * @param catalog The catalog to import into.
+ * @param csvFile The path to the CSV file.
  * @param path The path to the SQLite database file.
  */
-function addGenres(csvFile: string, path: string): void {
-  const genres = readGenresCsv(csvFile);
+function importCatalog<T>(
+  catalog: CatalogCommands<T>,
+  csvFile: string,
+  path: string,
+): void {
+  const records = catalog.readCsv(csvFile);
 
   const database = getDatabase(path);
   try {
     database.exec('BEGIN TRANSACTION;');
     try {
-      upsertGenres(database, genres);
+      catalog.upsert(database, records);
       database.exec('COMMIT;');
     } catch (error) {
       database.exec('ROLLBACK;');
@@ -74,29 +104,30 @@ function addGenres(csvFile: string, path: string): void {
     database.close();
   }
 
-  // A genre repeated in the file is imported once, with its last name.
-  const importedCount = new Set(genres.map((genre) => genre.id)).size;
+  // A record repeated in the file is imported once, with its last name.
+  const importedCount = new Set(records.map(catalog.keyOf)).size;
   console.log(
-    `Imported ${pluralize(importedCount, 'genre')} into ${resolve(path)}`,
+    `Imported ${pluralize(importedCount, catalog.noun)} into ${resolve(path)}`,
   );
 }
 
 /**
- * Deletes the genres that no movie is associated with, then closes the
- * connection.
+ * Deletes the records of a catalog that no movie is associated with, then
+ * closes the connection.
+ * @param catalog The catalog to clean.
  * @param path The path to the SQLite database file.
  */
-function cleanGenres(path: string): void {
+function cleanCatalog<T>(catalog: CatalogCommands<T>, path: string): void {
   const database = getDatabase(path);
   let deletedCount: number;
   try {
-    deletedCount = deleteUnusedGenres(database);
+    deletedCount = catalog.deleteUnused(database);
   } finally {
     database.close();
   }
 
   console.log(
-    `Removed ${pluralize(deletedCount, 'unused genre')} from ${resolve(path)}`,
+    `Removed ${pluralize(deletedCount, `unused ${catalog.noun}`)} from ${resolve(path)}`,
   );
 }
 
@@ -129,14 +160,22 @@ program
   .description('Insert or update the genres listed in a CSV file (id,name)')
   .argument('<csv-file>', 'path to the genres CSV file')
   .action((csvFile: string) => {
-    runCommand(() => addGenres(csvFile, program.opts<GlobalOptions>().path));
+    runCommand(() =>
+      importCatalog(
+        GENRE_COMMANDS,
+        csvFile,
+        program.opts<GlobalOptions>().path,
+      ),
+    );
   });
 
 program
   .command('clean-genres')
   .description('Delete the genres that are not associated with any movie')
   .action(() => {
-    runCommand(() => cleanGenres(program.opts<GlobalOptions>().path));
+    runCommand(() =>
+      cleanCatalog(GENRE_COMMANDS, program.opts<GlobalOptions>().path),
+    );
   });
 
 program.parse();
