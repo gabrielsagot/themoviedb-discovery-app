@@ -1,6 +1,7 @@
 import { DatabaseSync } from 'node:sqlite';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
+  deleteUnusedCountries,
   findCountryByCode,
   listCountries,
   upsertCountries,
@@ -164,6 +165,83 @@ describe('country-repository.ts', () => {
           { code: 'US', name: null as unknown as string },
         ]),
       ).toThrow(/NOT NULL constraint failed: countries.name/);
+      expect(listCountries(database)).toEqual([{ code: 'FR', name: 'France' }]);
+    });
+  });
+  describe('deleteUnusedCountries', () => {
+    /**
+     * Stores a movie and associates it with the given production countries.
+     * @param movieId The TMDB identifier of the movie.
+     * @param countryCodes The countries to associate with the movie.
+     */
+    function insertMovieWithCountries(
+      movieId: number,
+      countryCodes: string[],
+    ): void {
+      database
+        .prepare(
+          `INSERT INTO movies (id, title, original_title, original_language, overview, collected_at)
+           VALUES (?, 'Titre', 'Title', 'fr', '', '2026-11-09T00:00:00Z')`,
+        )
+        .run(movieId);
+      const associate = database.prepare(
+        'INSERT INTO production_countries (movie_id, country_code) VALUES (?, ?)',
+      );
+      for (const countryCode of countryCodes) {
+        associate.run(movieId, countryCode);
+      }
+    }
+
+    it('deletes only the countries no movie is associated with', () => {
+      upsertCountries(database, [
+        { code: 'BE', name: 'Belgique' },
+        { code: 'FR', name: 'France' },
+        { code: 'GB', name: 'Royaume-Uni' },
+        { code: 'US', name: 'États-Unis' },
+      ]);
+      insertMovieWithCountries(1, ['FR', 'BE']);
+      insertMovieWithCountries(2, ['FR']);
+
+      expect(deleteUnusedCountries(database)).toBe(2);
+      expect(listCountries(database)).toEqual([
+        { code: 'BE', name: 'Belgique' },
+        { code: 'FR', name: 'France' },
+      ]);
+    });
+
+    it('keeps the movie associations untouched', () => {
+      upsertCountries(database, [
+        { code: 'FR', name: 'France' },
+        { code: 'US', name: 'États-Unis' },
+      ]);
+      insertMovieWithCountries(1, ['FR']);
+
+      deleteUnusedCountries(database);
+
+      expect(
+        database
+          .prepare('SELECT movie_id, country_code FROM production_countries')
+          .all(),
+      ).toEqual([{ movie_id: 1, country_code: 'FR' }]);
+    });
+
+    it('deletes every country when no movie is stored', () => {
+      upsertCountries(database, [
+        { code: 'FR', name: 'France' },
+        { code: 'US', name: 'États-Unis' },
+      ]);
+
+      expect(deleteUnusedCountries(database)).toBe(2);
+      expect(listCountries(database)).toEqual([]);
+    });
+
+    it('returns 0 when every country is used or none is stored', () => {
+      expect(deleteUnusedCountries(database)).toBe(0);
+
+      upsertCountries(database, [{ code: 'FR', name: 'France' }]);
+      insertMovieWithCountries(1, ['FR']);
+
+      expect(deleteUnusedCountries(database)).toBe(0);
       expect(listCountries(database)).toEqual([{ code: 'FR', name: 'France' }]);
     });
   });
