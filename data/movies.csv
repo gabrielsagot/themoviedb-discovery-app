@@ -1,0 +1,4 @@
+id,title,original_title,original_language,overview,release_date,popularity,vote_average,vote_count,poster_path,backdrop_path,runtime_minutes,budget,revenue,collected_at
+900001,Le Voyage imaginaire,The Imaginary Journey,en,"Un film fictif, utilisé pour illustrer l'import.",2019-05-30,87.5,8.5,18000,/voyage-affiche.jpg,/voyage-fond.jpg,133,11000000,262000000,2026-11-03T10:00:00Z
+900002,La Dernière Valse,The Last Waltz,fr,"Un autre film fictif, sans budget connu.",2020-09-12,42.1,7.2,3200,/valse-affiche.jpg,,118,0,,2026-11-03T10:00:00Z
+900003,Film sans date,Film without a date,es,,,3.4,,0,,,,,,
