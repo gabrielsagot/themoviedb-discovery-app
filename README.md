@@ -130,6 +130,56 @@ node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite clean-genres
 
 En cas d'erreur (fichier introuvable, en-tête ou valeur invalide, échec d'écriture), le CLI affiche `error: <message>` sur la sortie d'erreur et se termine avec le code 1.
 
+### Gestion des films
+
+Le module `src/back-end/database/movie-repository.ts` lit et écrit les films de la base. Un film (type `StoredMovie`, à ne pas confondre avec le type `Movie` des réponses de l'API TMDB) est identifié par son identifiant TMDB `id`. Une valeur inconnue (absente chez TMDB, ou égale à zéro pour la durée, le budget et les recettes) vaut `null`.
+
+| Fonction                         | Rôle                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------- |
+| `findMovieById(database, id)`    | Renvoie le film correspondant, ou `undefined` s'il n'existe pas.                    |
+| `listMovies(database)`           | Renvoie tous les films, triés par identifiant croissant (liste vide si aucun film). |
+| `upsertMovies(database, movies)` | Insère les nouveaux films et actualise les films existants, sans doublon.           |
+
+`upsertMovies` accepte n'importe quel itérable (tableau, `Set`, valeurs d'une `Map`, générateur) de `MovieInput`, c'est-à-dire un film sans `release_year`. Cette année de sortie est calculée par la base à partir de `release_date` et n'est jamais écrite directement.
+
+- Un film existant est **actualisé sur place** (`INSERT … ON CONFLICT DO UPDATE`) : ses genres et ses pays de production sont conservés. `INSERT OR REPLACE` supprimerait la ligne avant de la recréer, et la suppression en cascade effacerait ces associations.
+- Les autres films, y compris ceux des autres années, ne sont pas modifiés.
+- Un itérable vide ne modifie rien ; si un identifiant apparaît plusieurs fois, la dernière version est conservée.
+- Les écritures sont groupées : si un film est invalide (titre manquant, durée, budget ou recettes négatifs ou nuls), aucun film du lot n'est enregistré et l'erreur est propagée, y compris dans une transaction ouverte par l'appelant.
+
+```ts
+import { getDatabase } from './src/back-end/database/schema.ts';
+import {
+  findMovieById,
+  upsertMovies,
+} from './src/back-end/database/movie-repository.ts';
+
+const database = getDatabase();
+upsertMovies(database, [
+  {
+    id: 1,
+    title: 'Le Voyage imaginaire',
+    original_title: 'The Imaginary Journey',
+    original_language: 'en',
+    overview: 'Un film fictif.',
+    release_date: '2019-05-30',
+    popularity: 87.5,
+    vote_average: 8.5,
+    vote_count: 18000,
+    poster_path: null,
+    backdrop_path: null,
+    runtime_minutes: 133,
+    budget: null,
+    revenue: null,
+    collected_at: new Date().toISOString(),
+  },
+]);
+console.log(findMovieById(database, 1)?.release_year); // 2019
+database.close();
+```
+
+Les genres et les pays d'un film sont gérés à part, par leurs propres modules et les tables `movie_genres` et `production_countries`.
+
 ## API locale
 
 | Méthode | Route                 | Description                                                       |
