@@ -130,6 +130,34 @@ node src/back-end/backend-cli.ts --path ./data/custom-movies.sqlite clean-genres
 
 En cas d'erreur (fichier introuvable, en-tête ou valeur invalide, échec d'écriture), le CLI affiche `error: <message>` sur la sortie d'erreur et se termine avec le code 1.
 
+### Gestion des pays
+
+Le module `src/back-end/database/country-repository.ts` lit et écrit les pays de production de la base. Un pays (type `Country`) est identifié par son code ISO 3166-1 alpha-2 `code` (par exemple `FR`) et porte un libellé `name`.
+
+| Fonction                               | Rôle                                                                                |
+| -------------------------------------- | ----------------------------------------------------------------------------------- |
+| `findCountryByCode(database, code)`    | Renvoie le pays correspondant, ou `undefined` s'il n'existe pas.                    |
+| `listCountries(database)`              | Renvoie tous les pays, triés par code croissant (liste vide si aucun pays).         |
+| `upsertCountries(database, countries)` | Insère les nouveaux pays et met à jour le libellé des pays existants, sans doublon. |
+
+`upsertCountries` accepte n'importe quel itérable (tableau, `Set`, valeurs d'une `Map`, générateur). Un itérable vide ne modifie rien ; si un code apparaît plusieurs fois, le dernier libellé est conservé. Les écritures sont groupées : si un pays est invalide (nom manquant), aucun pays du lot n'est enregistré et l'erreur est propagée.
+
+```ts
+import { getDatabase } from './src/back-end/database/schema.ts';
+import {
+  listCountries,
+  upsertCountries,
+} from './src/back-end/database/country-repository.ts';
+
+const database = getDatabase();
+upsertCountries(database, [
+  { code: 'FR', name: 'France' },
+  { code: 'BE', name: 'Belgique' },
+]);
+console.log(listCountries(database)); // [{ code: 'BE', name: 'Belgique' }, { code: 'FR', name: 'France' }]
+database.close();
+```
+
 ### Gestion des films
 
 Le module `src/back-end/database/movie-repository.ts` lit et écrit les films de la base. Un film (type `StoredMovie`, à ne pas confondre avec le type `Movie` des réponses de l'API TMDB) est identifié par son identifiant TMDB `id`. Une valeur inconnue (absente chez TMDB, ou égale à zéro pour la durée, le budget et les recettes) vaut `null`.

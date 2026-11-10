@@ -5,6 +5,13 @@ export type Genre = {
   name: string;
 };
 
+// TypeScript type for a production country stored in the local database,
+// identified by its ISO 3166-1 alpha-2 code (e.g. "FR" for "France").
+export type Country = {
+  code: string;
+  name: string;
+};
+
 // TypeScript type for a movie stored in the local database, as read from the
 // `movies` table. It is distinct from the `Movie` type of the TMDB API
 // responses. Unknown values (absent or zero in TMDB) are `null`.
