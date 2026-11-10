@@ -167,6 +167,25 @@ Le résultat est écrit dans `storybook-static/`, ignoré par git.
 - **Accessibilité** : l'onglet **Accessibility**, en bas de l'écran, liste les problèmes détectés dans l'histoire affichée.
 - La configuration est dans le dossier `.storybook/` (`main.ts` pour les histoires et les extensions, `preview.tsx` pour les styles et le sélecteur de thème). La page d'accueil de Storybook, `Introduction`, reprend ces explications.
 
+### Les widgets du tableau de bord
+
+Les widgets sont dans `src/front-end/components/`, chacun avec son composant, son style, ses histoires et ses tests. Dans Storybook, ils sont regroupés sous **Widgets**.
+
+| Widget            | Composant                                 | Ce qu'il montre                                                           |
+| ----------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
+| « Films en base » | `MoviesCountWidget/MoviesCountWidget.tsx` | Le nombre de films de la base, avec la période de leurs années de sortie. |
+
+Tous les widgets s'appuient sur `WidgetCard`, la carte commune : un titre (`h3`), puis le contenu du widget, ou un message ou un espace réservé quand il n'y en a pas. Elle gère les quatre états :
+
+| État      | Ce que l'on voit                                                  | Pour les technologies d'assistance                                             |
+| --------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `ready`   | Le contenu du widget.                                             | La carte est un `article` nommé par son titre.                                 |
+| `loading` | Un espace réservé animé (immobile si l'on réduit les animations). | La carte est marquée occupée (`aria-busy`) et annonce « Chargement en cours ». |
+| `empty`   | « Aucune donnée disponible ».                                     | Texte lisible dans la carte.                                                   |
+| `error`   | « Les données sont indisponibles ».                               | Annoncé comme une alerte (`role="alert"`).                                     |
+
+Pour ajouter un widget : créer son composant autour de `WidgetCard`, ses histoires (une par état, avec `tags: ['autodocs']`), puis ses tests. Les tests chargent les histoires avec `composeStories` de `@storybook/react-vite` : ils vérifient ainsi ce que Storybook affiche, et un état oublié dans les histoires est un état non testé. Un absent n'est jamais remplacé par `0` : `null` ou `undefined` donne l'état `empty`, alors qu'un vrai `0` est affiché.
+
 ## Vérifications
 
 ```sh

@@ -1,0 +1,44 @@
+/* "Films en base" widget */
+.movies-count-value {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.movies-count-number {
+  color: var(--heading);
+  font-size: clamp(1.7rem, 6vw, 2.1rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.movies-count-unit {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* The period is a small pill under the number */
+.movies-count-period {
+  align-self: flex-start;
+  margin: 2px 0 0;
+  padding: 2px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+/* Text for assistive technologies only */
+.movies-count-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
