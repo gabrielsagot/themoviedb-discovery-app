@@ -11,6 +11,13 @@ import './WidgetCard.css';
  */
 export type WidgetStatus = 'ready' | 'loading' | 'empty' | 'error';
 
+/**
+ * The states a widget receives from the code that fetches its data. The
+ * `empty` state is not one of them: a widget decides it itself, when the data
+ * it receives is missing or invalid.
+ */
+export type WidgetDataStatus = Exclude<WidgetStatus, 'empty'>;
+
 export interface WidgetCardProps {
   /** The name of the widget, shown as its heading (e.g. "Films en base"). */
   label: string;
@@ -49,7 +56,7 @@ export default function WidgetCard({
       {status === 'loading' && (
         <>
           <div className="widget-card-skeleton" aria-hidden="true" />
-          <p className="widget-card-sr-only" role="status">
+          <p className="visually-hidden" role="status">
             Chargement en cours
           </p>
         </>

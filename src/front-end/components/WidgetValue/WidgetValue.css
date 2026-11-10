@@ -1,0 +1,18 @@
+/* A value and its unit, shared by the widgets of the dashboard */
+.widget-value {
+  margin: 0;
+  line-height: 1.1;
+}
+
+.widget-value-number {
+  color: var(--heading);
+  font-size: clamp(1.7rem, 6vw, 2.1rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+
+.widget-value-unit {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}

@@ -1,4 +1,6 @@
 import WidgetCard from '../WidgetCard/WidgetCard';
+import type { WidgetDataStatus } from '../WidgetCard/WidgetCard';
+import WidgetValue from '../WidgetValue/WidgetValue';
 import './MoviesCountWidget.css';
 
 /** The first and the last release year of the movies of the database. */
@@ -20,7 +22,7 @@ export interface MoviesCountWidgetProps {
    * Whether the data is still being fetched (`loading`) or could not be
    * fetched (`error`). Defaults to `ready`.
    */
-  status?: 'ready' | 'loading' | 'error';
+  status?: WidgetDataStatus;
 }
 
 // French writes numbers with a space between groups of three digits, but
@@ -60,16 +62,14 @@ export default function MoviesCountWidget({
 
   return (
     <WidgetCard label={label}>
-      <p className="movies-count-value">
-        <span className="movies-count-number">{countFormat.format(count)}</span>{' '}
-        {/* In French, 0 and 1 are singular. */}
-        <span className="movies-count-unit">
-          {count < 2 ? 'film' : 'films'}
-        </span>
-      </p>
+      {/* In French, 0 and 1 are singular. */}
+      <WidgetValue
+        value={countFormat.format(count)}
+        unit={count < 2 ? 'film' : 'films'}
+      />
       {period && (
         <p className="movies-count-period">
-          <span className="movies-count-sr-only">Période : </span>
+          <span className="visually-hidden">Période : </span>
           {formatPeriod(period)}
         </p>
       )}
