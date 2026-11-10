@@ -6,6 +6,7 @@ import MovieDetailPage from './pages/MovieDetailPage/MovieDetailPage';
 import MoviesListPage from './pages/MoviesListPage/MoviesListPage';
 import NotFoundPage from './pages/NotFoundPage/NotFoundPage';
 import AboutPage from './pages/AboutPage/AboutPage';
+import DashboardPage from './pages/DashboardPage/DashboardPage';
 import NavBar from './components/NavBar/NavBar';
 
 type Theme = 'light' | 'dark';
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/movies" replace />} />
         <Route path="/movies" element={<MoviesListPage />} />
         <Route path="/movies/:id" element={<MovieDetailPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/about" element={<AboutPage />} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>

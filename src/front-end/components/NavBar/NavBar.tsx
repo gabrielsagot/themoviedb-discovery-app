@@ -26,6 +26,14 @@ export default function NavBar({ theme, onToggleTheme }: NavBarProps) {
             className={({ isActive }) =>
               `app-nav-link${isActive ? ' app-nav-link-active' : ''}`
             }
+            to="/dashboard"
+          >
+            Tableau de bord
+          </NavLink>
+          <NavLink
+            className={({ isActive }) =>
+              `app-nav-link${isActive ? ' app-nav-link-active' : ''}`
+            }
             to="/about"
           >
             À propos
