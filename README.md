@@ -171,9 +171,10 @@ Le résultat est écrit dans `storybook-static/`, ignoré par git.
 
 Les widgets sont dans `src/front-end/components/`, chacun avec son composant, son style, ses histoires et ses tests. Dans Storybook, ils sont regroupés sous **Widgets**.
 
-| Widget            | Composant                                 | Ce qu'il montre                                                           |
-| ----------------- | ----------------------------------------- | ------------------------------------------------------------------------- |
-| « Films en base » | `MoviesCountWidget/MoviesCountWidget.tsx` | Le nombre de films de la base, avec la période de leurs années de sortie. |
+| Widget            | Composant                                       | Ce qu'il montre                                                           |
+| ----------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
+| « Films en base » | `MoviesCountWidget/MoviesCountWidget.tsx`       | Le nombre de films de la base, avec la période de leurs années de sortie. |
+| « Durée moyenne » | `AverageRuntimeWidget/AverageRuntimeWidget.tsx` | La durée moyenne des films, en minutes.                                   |
 
 Tous les widgets s'appuient sur `WidgetCard`, la carte commune : un titre (`h3`), puis le contenu du widget, ou un message ou un espace réservé quand il n'y en a pas. Elle gère les quatre états :
 
@@ -183,6 +184,12 @@ Tous les widgets s'appuient sur `WidgetCard`, la carte commune : un titre (`h3`)
 | `loading` | Un espace réservé animé (immobile si l'on réduit les animations). | La carte est marquée occupée (`aria-busy`) et annonce « Chargement en cours ». |
 | `empty`   | « Aucune donnée disponible ».                                     | Texte lisible dans la carte.                                                   |
 | `error`   | « Les données sont indisponibles ».                               | Annoncé comme une alerte (`role="alert"`).                                     |
+
+Les widgets qui montrent un nombre et son unité utilisent aussi `WidgetValue` : le nombre en grand, l'unité en petit juste après. Il reçoit la valeur **déjà formatée** (la mise en forme française reste dans chaque widget) et, quand l'unité est une abréviation ou un symbole, un `unitLabel` que les technologies d'assistance lisent à la place : « min » est lu « minutes », et « / 10 » est lu « sur 10 ».
+
+Le texte réservé aux technologies d'assistance utilise la classe globale `visually-hidden` (`global.css`).
+
+Les widgets ne calculent pas leurs données : ils reçoivent une valeur **déjà calculée** et l'affichent. Un widget valide ce qu'il reçoit : une valeur absente ou impossible donne l'état `empty`, jamais un `0` inventé. Par exemple, « Durée moyenne » affiche « aucune donnée » pour une moyenne inférieure à 1 minute, car le modèle de données traite une durée de 0 comme inconnue.
 
 Pour ajouter un widget : créer son composant autour de `WidgetCard`, ses histoires (une par état, avec `tags: ['autodocs']`), puis ses tests. Les tests chargent les histoires avec `composeStories` de `@storybook/react-vite` : ils vérifient ainsi ce que Storybook affiche, et un état oublié dans les histoires est un état non testé. Un absent n'est jamais remplacé par `0` : `null` ou `undefined` donne l'état `empty`, alors qu'un vrai `0` est affiché.
 
