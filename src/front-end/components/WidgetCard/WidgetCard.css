@@ -1,0 +1,81 @@
+/* Widget card: the shell shared by every widget of the dashboard */
+.widget-card {
+  display: flex;
+  min-width: 0;
+  min-height: 112px;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: 0 6px 18px rgb(16 47 76 / 7%);
+}
+
+.widget-card-label {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.widget-card-message {
+  margin: auto 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.widget-card-message-error {
+  color: var(--error, #b3261e);
+  font-weight: 650;
+}
+
+:root[data-theme='dark'] .widget-card-message-error {
+  color: #ffb4ab;
+}
+
+/* Placeholder shown while the data is loading */
+.widget-card-skeleton {
+  height: 34px;
+  margin-top: 6px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    var(--line) 25%,
+    var(--surface-muted) 50%,
+    var(--line) 75%
+  );
+  background-size: 200% 100%;
+  animation: widget-card-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes widget-card-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .widget-card-skeleton {
+    animation: none;
+  }
+}
+
+/* Text for assistive technologies only */
+.widget-card-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
