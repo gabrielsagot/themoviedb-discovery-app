@@ -1,0 +1,52 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+# Storybook de TMDB Discovery
+
+Storybook présente **chaque composant du tableau de bord isolément**, dans tous
+ses états, sans avoir besoin de l'API ni de la base de données. Il sert à
+développer un widget, à le valider visuellement et à documenter ses propriétés.
+
+## Lancer Storybook
+
+```sh
+npm run storybook
+```
+
+Storybook s'ouvre sur [http://localhost:6006](http://localhost:6006). Pour
+vérifier qu'il se construit sans erreur, comme le fait la CI :
+
+```sh
+npm run build-storybook
+```
+
+## Ce que l'on trouve ici
+
+- **Introduction** : cette page.
+- **Widgets** : les vignettes du tableau de bord. Chaque widget a une histoire
+  par état (nominal, chargement, absence de données, erreur) et une page de
+  documentation générée à partir de ses propriétés.
+
+## Les outils de la barre du haut
+
+Ils apparaissent quand une histoire est affichée, sous la forme d'icônes :
+
+- **Thème** : bascule entre le thème clair et le thème sombre de
+  l'application. Un widget doit rester lisible dans les deux.
+- **Viewport size** : simule un écran de téléphone ou de tablette, pour
+  vérifier qu'un widget reste lisible sur mobile.
+- **Vision filter** : simule des déficiences visuelles (daltonisme, vision
+  floue) pour vérifier que l'information ne repose pas sur la seule couleur.
+
+Dans le panneau du bas, l'onglet **Accessibility** liste les problèmes
+d'accessibilité détectés dans l'histoire affichée, par exemple un contraste
+insuffisant ou un libellé manquant.
+
+## Ajouter un composant
+
+1. Créer l'histoire à côté du composant : `Composant/Composant.stories.tsx`.
+2. Déclarer le composant avec `tags: ['autodocs']` pour que ses propriétés
+   soient documentées automatiquement.
+3. Écrire une histoire par état à montrer.
+4. Vérifier le rendu avec `npm run storybook`.
