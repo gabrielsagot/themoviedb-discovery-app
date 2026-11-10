@@ -6,6 +6,7 @@ Application web de découverte de films qui s'appuie sur l'API de [The Movie Dat
 
 - Liste des films populaires, avec pagination et paramètres de langue et de région.
 - Fiche détaillée pour chaque film.
+- Tableau de bord des films (`/dashboard`), accessible depuis la barre de navigation : ses sections « Films » et « Genres » n'affichent pas encore de widget, ils seront ajoutés par les tickets suivants.
 - Pages « À propos » et « Page introuvable ».
 - Thème clair ou sombre, conservé dans le navigateur.
 - API Express intermédiaire pour appeler TMDB sans exposer le jeton dans le navigateur.
