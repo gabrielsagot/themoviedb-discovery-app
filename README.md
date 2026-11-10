@@ -208,6 +208,55 @@ database.close();
 
 Les genres et les pays d'un film sont gérés à part, par leurs propres modules et les tables `movie_genres` et `production_countries`.
 
+### Mettre à jour la base depuis TMDB
+
+Le service `src/back-end/services/tmdb-sync-service.ts` alimente et actualise la base à partir de l'API TMDB : le catalogue des genres, celui des pays, puis un **échantillon** des films de chaque année de sortie, avec leurs genres et leurs pays.
+
+```ts
+import { getDatabase } from './src/back-end/database/schema.ts';
+import { createTmdbClient } from './src/back-end/services/tmdb-client.ts';
+import { updateDatabaseFromTmdb } from './src/back-end/services/tmdb-sync-service.ts';
+import { tmdbAccessToken } from './src/back-end/utils/config.ts';
+
+const database = getDatabase();
+const summary = await updateDatabaseFromTmdb(
+  database,
+  createTmdbClient(tmdbAccessToken),
+  { years: [2022, 2023, 2024], moviesPerYear: 100 },
+);
+console.log(summary); // { genres: 19, countries: 249, movies: 300, failures: [] }
+database.close();
+```
+
+| Option          | Défaut          | Description                                                              |
+| --------------- | --------------- | ------------------------------------------------------------------------ |
+| `years`         | obligatoire     | Années de sortie à collecter : entiers de `1000` à `9999`.               |
+| `moviesPerYear` | `100`           | Nombre maximal de films collectés par année, du plus populaire au moins. |
+| `language`      | `fr-FR`         | Langue des titres, résumés et noms de genres.                            |
+| `now`           | horloge système | Horloge qui donne la date d'observation (`collected_at`) de chaque film. |
+
+Les options sont vérifiées avant toute requête (une `RangeError` explicite sinon). La fonction renvoie un bilan : nombre de genres et de pays reçus, nombre de films enregistrés et liste des `failures`.
+
+Déroulement :
+
+1. les genres (`GET /3/genre/movie/list`) puis les pays (`GET /3/configuration/countries`) sont insérés ou renommés ;
+2. pour chaque année, TMDB Discover (`GET /3/discover/movie`, filtre `primary_release_year`, du plus populaire au moins) est lu page par page jusqu'à `moviesPerYear` films, sans jamais dépasser la page 500 que TMDB accepte ; un film présent sur deux pages n'est compté qu'une fois ;
+3. la fiche de chaque film (`GET /3/movie/{id}`) est lue puis enregistrée avec ses genres et ses pays.
+
+Règles du modèle de données appliquées au passage :
+
+- une date de sortie vide, absente ou impossible devient inconnue (`null`) ;
+- une durée, un budget ou des recettes égaux à `0` deviennent inconnus ; une popularité, une note ou un nombre de votes égaux à `0` sont conservés, mais absents ils restent inconnus ;
+- les noms de pays sont en anglais (`France`, `Germany`), comme dans les fiches des films, pour qu'une mise à jour du catalogue et une mise à jour d'un film ne se renomment jamais l'une l'autre.
+
+**Actualisation** : relancer la mise à jour ne crée aucun doublon. Un film déjà présent est actualisé sur place, ses genres et ses pays sont **remplacés** par ceux de TMDB (ceux qu'il n'a plus sont détachés, les nouveaux rattachés), et les films des autres années ne sont pas touchés. Chaque film est écrit dans un groupe d'écritures avec ses genres et ses pays : si l'écriture échoue, rien de ce film n'est conservé.
+
+**Erreurs** : un film qui ne peut pas être lu (par exemple un `404`) ou enregistré est signalé dans `failures` (`{ movieId, message }`) et les autres sont traités. Trois cas arrêtent en revanche toute la mise à jour : un jeton refusé par TMDB (`401`, car tous les autres films échoueraient aussi), l'échec d'un catalogue et l'échec de TMDB Discover.
+
+Le client TMDB (`createTmdbClient`) n'est qu'une des implémentations de `TmdbSource`, l'interface de lecture que le service utilise : les tests la remplacent par une fausse source et n'ont besoin ni du réseau ni d'un jeton. Le jeton n'est envoyé qu'à TMDB, dans l'en-tête `Authorization`, jamais dans l'adresse.
+
+Les fonctions `replaceMovieGenres` et `replaceMovieCountries` (`src/back-end/database/movie-associations.ts`) remplacent les genres ou les pays d'un film par ceux donnés.
+
 ## API locale
 
 | Méthode | Route                 | Description                                                       |
