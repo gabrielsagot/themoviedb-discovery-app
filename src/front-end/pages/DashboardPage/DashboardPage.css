@@ -1,0 +1,89 @@
+/* Dashboard page */
+.dashboard-page {
+  padding-top: 52px;
+}
+
+.dashboard-hero {
+  max-width: 720px;
+  padding: 0 0 36px;
+}
+
+.dashboard-eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dashboard-hero h1 {
+  max-width: 700px;
+  margin: 0;
+  color: var(--heading);
+  font-size: 3.25rem;
+  line-height: 1.04;
+}
+
+.dashboard-intro {
+  max-width: 620px;
+  margin: 20px 0 0;
+  color: var(--text-secondary);
+  font-size: 1.22rem;
+  line-height: 1.55;
+}
+
+.dashboard-section {
+  padding: 30px 0 34px;
+  border-top: 1px solid var(--line);
+}
+
+.dashboard-section-heading h2 {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.dashboard-section-heading p {
+  margin: 6px 0 0;
+  color: var(--text-muted);
+  font-size: 0.95rem;
+}
+
+/* The empty state keeps the footprint of a row of widgets. */
+.dashboard-empty {
+  display: grid;
+  min-height: 112px;
+  margin: 22px 0 0;
+  padding: 16px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  place-items: center;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .dashboard-page {
+    padding-top: 34px;
+  }
+
+  .dashboard-hero {
+    padding-bottom: 28px;
+  }
+
+  .dashboard-hero h1 {
+    font-size: 2.35rem;
+  }
+
+  .dashboard-intro {
+    font-size: 1.05rem;
+  }
+
+  .dashboard-section {
+    padding: 26px 0 28px;
+  }
+}
