@@ -175,6 +175,7 @@ Les widgets sont dans `src/front-end/components/`, chacun avec son composant, so
 | ----------------- | ----------------------------------------------- | ------------------------------------------------------------------------- |
 | « Films en base » | `MoviesCountWidget/MoviesCountWidget.tsx`       | Le nombre de films de la base, avec la période de leurs années de sortie. |
 | « Durée moyenne » | `AverageRuntimeWidget/AverageRuntimeWidget.tsx` | La durée moyenne des films, en minutes.                                   |
+| « Note moyenne »  | `AverageRatingWidget/AverageRatingWidget.tsx`   | La note moyenne simple des films, sur 10, avec deux décimales.            |
 
 Tous les widgets s'appuient sur `WidgetCard`, la carte commune : un titre (`h3`), puis le contenu du widget, ou un message ou un espace réservé quand il n'y en a pas. Elle gère les quatre états :
 
