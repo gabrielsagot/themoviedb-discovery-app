@@ -180,6 +180,47 @@ database.close();
 
 Les genres et les pays d'un film sont gérés à part, par leurs propres modules et les tables `movie_genres` et `production_countries`.
 
+### Importer des films depuis un CSV
+
+Le module `src/back-end/database/movie-csv.ts` importe les films d'un fichier CSV dans la base. Un exemple de trois films fictifs est fourni dans [data/movies.csv](data/movies.csv).
+
+L'en-tête doit contenir les colonnes obligatoires `id`, `title`, `original_title` et `original_language`, et peut ajouter n'importe quelle colonne facultative : `overview`, `release_date`, `popularity`, `vote_average`, `vote_count`, `poster_path`, `backdrop_path`, `runtime_minutes`, `budget`, `revenue` et `collected_at`. Les colonnes peuvent être dans n'importe quel ordre et sans distinction de casse ; une colonne manquante parmi les obligatoires, inconnue ou répétée provoque une erreur qui les signale toutes.
+
+```csv
+id,title,original_title,original_language,release_date,runtime_minutes,budget
+900001,Le Voyage imaginaire,The Imaginary Journey,en,2019-05-30,133,11000000
+```
+
+| Colonne                                        | Règle                                                                                                                                                       |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`                                           | Entier positif : l'identifiant TMDB du film.                                                                                                                |
+| `title`, `original_title`, `original_language` | Texte non vide.                                                                                                                                             |
+| `overview`                                     | Texte, éventuellement vide.                                                                                                                                 |
+| `release_date`                                 | Date réelle au format `AAAA-MM-JJ` (`2023-02-29` est refusée), ou vide si inconnue.                                                                         |
+| `popularity`                                   | Nombre supérieur ou égal à 0, ou vide.                                                                                                                      |
+| `vote_average`                                 | Nombre de 0 à 10, ou vide.                                                                                                                                  |
+| `vote_count`                                   | Entier supérieur ou égal à 0, ou vide.                                                                                                                      |
+| `poster_path`, `backdrop_path`                 | Chemin de l'image, ou vide.                                                                                                                                 |
+| `runtime_minutes`, `budget`, `revenue`         | Entier positif, ou vide. La valeur `0`, que TMDB utilise pour un champ inconnu, est lue comme inconnue.                                                     |
+| `collected_at`                                 | Date ou date et heure ISO 8601 avec fuseau (`2026-11-03T10:00:00Z`, `…+01:00`), enregistrée en UTC. Si elle est absente ou vide, c'est l'heure de l'import. |
+
+Les nombres sont des nombres décimaux simples : l'écriture avec exposant (`1e3`), hexadécimale ou `Infinity` est refusée. Le parseur accepte les fins de ligne LF et CRLF, le BOM UTF-8, les espaces autour des valeurs, les virgules dans les champs entre guillemets et les guillemets échappés ; les lignes vides sont ignorées, et un fichier qui ne contient que l'en-tête n'importe aucun film. Une valeur vide est inconnue (`null`).
+
+Toute erreur (fichier introuvable, en-tête invalide, valeur invalide, guillemet mal fermé) lève une `MovieCsvError` qui indique la colonne, la valeur et la ligne concernées.
+
+```ts
+import { getDatabase } from './src/back-end/database/schema.ts';
+import { importMoviesCsv } from './src/back-end/database/movie-csv.ts';
+
+const database = getDatabase();
+console.log(importMoviesCsv(database, './data/movies.csv')); // 3
+database.close();
+```
+
+`importMoviesCsv(database, filePath)` valide **tout** le fichier avant d'écrire quoi que ce soit, puis enregistre les films avec `upsertMovies` dans un seul groupe d'écritures : si l'une d'elles échoue, aucun film n'est importé. Les films nouveaux sont insérés et les films existants, identifiés par leur `id`, sont actualisés sans doublon. La fonction renvoie le nombre de films distincts importés (un film répété dans le fichier compte une fois, avec sa dernière version).
+
+Un film importé **remplace** le film enregistré : une colonne absente du CSV remet la valeur correspondante à « inconnue ». Ses genres et ses pays de production sont, eux, conservés.
+
 ## API locale
 
 | Méthode | Route                 | Description                                                       |
