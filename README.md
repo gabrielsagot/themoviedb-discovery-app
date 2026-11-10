@@ -144,6 +144,29 @@ Les routes des films acceptent les paramètres `language`, `page` et `region`. E
 /api/movies/popular?language=fr-FR&page=1&region=FR
 ```
 
+## Storybook
+
+Storybook présente les composants du tableau de bord **isolément et dans tous leurs états**, sans API ni base de données : il sert à développer un widget, à le valider visuellement et à documenter ses propriétés.
+
+```sh
+npm run storybook
+```
+
+Storybook s'ouvre sur [http://localhost:6006](http://localhost:6006). Pour le construire sans le lancer, comme le fait la CI (job `storybook-build`) :
+
+```sh
+npm run build-storybook
+```
+
+Le résultat est écrit dans `storybook-static/`, ignoré par git.
+
+- **Où écrire une histoire** : à côté du composant, dans `Composant/Composant.stories.tsx`. Storybook trouve aussi les pages de documentation `*.mdx` sous `src/front-end/`.
+- **Une histoire par état** : nominal, chargement, absence de données, erreur. Déclarer le composant avec `tags: ['autodocs']` génère la documentation de ses propriétés.
+- **Styles** : Storybook charge `global.css` et `app.css`, un widget y a donc l'apparence qu'il a dans l'application.
+- **Barre d'outils** : le sélecteur **Thème** bascule entre le thème clair et le thème sombre ; **Viewport size** simule un téléphone ou une tablette ; **Vision filter** simule des déficiences visuelles.
+- **Accessibilité** : l'onglet **Accessibility**, en bas de l'écran, liste les problèmes détectés dans l'histoire affichée.
+- La configuration est dans le dossier `.storybook/` (`main.ts` pour les histoires et les extensions, `preview.tsx` pour les styles et le sélecteur de thème). La page d'accueil de Storybook, `Introduction`, reprend ces explications.
+
 ## Vérifications
 
 ```sh
