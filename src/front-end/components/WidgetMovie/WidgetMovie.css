@@ -1,12 +1,12 @@
 /* The poster on the left, the information of the movie on the right */
-.top-rated-movie {
+.widget-movie {
   display: flex;
   min-width: 0;
   align-items: flex-start;
   gap: 12px;
 }
 
-.top-rated-poster {
+.widget-movie-poster {
   flex: none;
   width: 64px;
   aspect-ratio: 2 / 3;
@@ -15,7 +15,7 @@
 }
 
 /* The explicit replacement of a poster that is missing or cannot be loaded */
-.top-rated-poster-missing {
+.widget-movie-poster-missing {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -29,7 +29,7 @@
   text-align: center;
 }
 
-.top-rated-info {
+.widget-movie-info {
   display: flex;
   min-width: 0;
   flex: 1;
@@ -38,7 +38,7 @@
 }
 
 /* A long title wraps instead of being cut */
-.top-rated-title {
+.widget-movie-title {
   margin: 0;
   color: var(--heading);
   font-size: 1rem;
@@ -47,7 +47,7 @@
   overflow-wrap: anywhere;
 }
 
-.top-rated-year {
+.widget-movie-year {
   margin: 0;
   color: var(--text-muted);
   font-size: 0.85rem;
