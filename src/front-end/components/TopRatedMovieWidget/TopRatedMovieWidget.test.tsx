@@ -154,7 +154,7 @@ describe('TopRatedMovieWidget stories', () => {
       screen.getByText(
         "Le Merveilleux Voyage extraordinaire de l'incroyable Monsieur Alphonse à travers les cinq continents",
       ).className,
-    ).toBe('top-rated-title');
+    ).toBe('widget-movie-title');
   });
 
   it('says that the year is unknown instead of writing one', () => {
@@ -162,7 +162,9 @@ describe('TopRatedMovieWidget stories', () => {
     render(<UnknownYear />);
 
     // Assert
-    expect(screen.getByText('Année inconnue').className).toBe('top-rated-year');
+    expect(screen.getByText('Année inconnue').className).toBe(
+      'widget-movie-year',
+    );
     expect(card().textContent).not.toContain('null');
     expect(card().textContent).not.toContain('0000');
   });

@@ -1,8 +1,7 @@
-import { useState } from 'react';
 import WidgetCard from '../WidgetCard/WidgetCard';
 import type { WidgetDataStatus } from '../WidgetCard/WidgetCard';
+import WidgetMovie from '../WidgetMovie/WidgetMovie';
 import WidgetValue from '../WidgetValue/WidgetValue';
-import './TopRatedMovieWidget.css';
 
 /** The best rated movie, as the widget shows it. */
 export interface TopRatedMovie {
@@ -45,21 +44,6 @@ const ratingFormat = new Intl.NumberFormat('fr-FR', {
 });
 
 /**
- * Tells whether a release year can be written: a year with four digits, as
- * the data model only derives a year from a complete date.
- * @param year The release year, if any.
- * @returns Whether the year is a valid four-digit year.
- */
-function isValidYear(year: number | null | undefined): year is number {
-  return (
-    typeof year === 'number' &&
-    Number.isInteger(year) &&
-    year >= 1000 &&
-    year <= 9999
-  );
-}
-
-/**
  * The "Film le mieux noté" widget of the dashboard: the best rated movie of
  * the catalog, with its poster, its title, its release year and its rating
  * out of 10. A movie without a poster, or whose poster cannot be loaded,
@@ -70,10 +54,6 @@ export default function TopRatedMovieWidget({
   status = 'ready',
 }: TopRatedMovieWidgetProps) {
   const label = 'Film le mieux noté';
-  // The address of the poster that failed to load: a new address is tried
-  // again, since it is not the one that failed.
-  const [failedPosterUrl, setFailedPosterUrl] = useState<string | null>(null);
-
   const title = typeof movie?.title === 'string' ? movie.title.trim() : '';
   const hasRating =
     typeof movie?.rating === 'number' &&
@@ -87,36 +67,15 @@ export default function TopRatedMovieWidget({
     return <WidgetCard label={label} status="empty" />;
   }
 
-  const posterUrl = movie.posterUrl?.trim() ?? '';
-  const showPoster = posterUrl !== '' && posterUrl !== failedPosterUrl;
-
   return (
     <WidgetCard label={label}>
-      <div className="top-rated-movie">
-        {showPoster ? (
-          <img
-            className="top-rated-poster"
-            src={posterUrl}
-            alt={`Affiche du film ${title}`}
-            onError={() => setFailedPosterUrl(posterUrl)}
-          />
-        ) : (
-          <div className="top-rated-poster top-rated-poster-missing">
-            Affiche indisponible
-          </div>
-        )}
-        <div className="top-rated-info">
-          <p className="top-rated-title">{title}</p>
-          <p className="top-rated-year">
-            {isValidYear(movie.year) ? movie.year : 'Année inconnue'}
-          </p>
-          <WidgetValue
-            value={ratingFormat.format(movie.rating)}
-            unit="/ 10"
-            unitLabel="sur 10"
-          />
-        </div>
-      </div>
+      <WidgetMovie title={title} year={movie.year} posterUrl={movie.posterUrl}>
+        <WidgetValue
+          value={ratingFormat.format(movie.rating)}
+          unit="/ 10"
+          unitLabel="sur 10"
+        />
+      </WidgetMovie>
     </WidgetCard>
   );
 }
