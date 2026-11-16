@@ -1,0 +1,9 @@
+/* "Genres représentés" widget */
+/* The caption says what the number is a measure of */
+.genres-count-caption {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
