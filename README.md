@@ -171,14 +171,15 @@ Le résultat est écrit dans `storybook-static/`, ignoré par git.
 
 Les widgets sont dans `src/front-end/components/`, chacun avec son composant, son style, ses histoires et ses tests. Dans Storybook, ils sont regroupés sous **Widgets**.
 
-| Widget                      | Composant                                           | Ce qu'il montre                                                                     |
-| --------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| « Films en base »           | `MoviesCountWidget/MoviesCountWidget.tsx`           | Le nombre de films de la base, avec la période de leurs années de sortie.           |
-| « Durée moyenne »           | `AverageRuntimeWidget/AverageRuntimeWidget.tsx`     | La durée moyenne des films, en minutes.                                             |
-| « Note moyenne »            | `AverageRatingWidget/AverageRatingWidget.tsx`       | La note moyenne simple des films, sur 10, avec deux décimales.                      |
-| « Pays le plus représenté » | `TopCountryWidget/TopCountryWidget.tsx`             | Le pays qui apparaît dans le plus de films, avec son nombre de films.               |
-| « Film le mieux noté »      | `TopRatedMovieWidget/TopRatedMovieWidget.tsx`       | Le film le mieux noté, avec son affiche, son titre, son année et sa note sur 10.    |
-| « Film le plus populaire »  | `MostPopularMovieWidget/MostPopularMovieWidget.tsx` | Le film le plus populaire, avec son affiche, son titre, son année et sa popularité. |
+| Widget                      | Composant                                                 | Ce qu'il montre                                                                                                        |
+| --------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| « Films en base »           | `MoviesCountWidget/MoviesCountWidget.tsx`                 | Le nombre de films de la base, avec la période de leurs années de sortie.                                              |
+| « Durée moyenne »           | `AverageRuntimeWidget/AverageRuntimeWidget.tsx`           | La durée moyenne des films, en minutes.                                                                                |
+| « Note moyenne »            | `AverageRatingWidget/AverageRatingWidget.tsx`             | La note moyenne simple des films, sur 10, avec deux décimales.                                                         |
+| « Pays le plus représenté » | `TopCountryWidget/TopCountryWidget.tsx`                   | Le pays qui apparaît dans le plus de films, avec son nombre de films.                                                  |
+| « Film le mieux noté »      | `TopRatedMovieWidget/TopRatedMovieWidget.tsx`             | Le film le mieux noté, avec son affiche, son titre, son année et sa note sur 10.                                       |
+| « Film le plus populaire »  | `MostPopularMovieWidget/MostPopularMovieWidget.tsx`       | Le film le plus populaire, avec son affiche, son titre, son année et sa popularité.                                    |
+| « Film le plus rentable »   | `MostProfitableMovieWidget/MostProfitableMovieWidget.tsx` | Le film au meilleur retour sur investissement (ROI), avec son affiche, son titre, son année et son ROI en pourcentage. |
 
 Tous les widgets s'appuient sur `WidgetCard`, la carte commune : un titre (`h3`), puis le contenu du widget, ou un message ou un espace réservé quand il n'y en a pas. Elle gère les quatre états :
 
@@ -196,6 +197,24 @@ Le texte réservé aux technologies d'assistance utilise la classe globale `visu
 Les widgets ne calculent pas leurs données : ils reçoivent une valeur **déjà calculée** et l'affichent. Un widget valide ce qu'il reçoit : une valeur absente ou impossible donne l'état `empty`, jamais un `0` inventé. Par exemple, « Durée moyenne » affiche « aucune donnée » pour une moyenne inférieure à 1 minute, car le modèle de données traite une durée de 0 comme inconnue.
 
 Pour ajouter un widget : créer son composant autour de `WidgetCard`, ses histoires (une par état, avec `tags: ['autodocs']`), puis ses tests. Les tests chargent les histoires avec `composeStories` de `@storybook/react-vite` : ils vérifient ainsi ce que Storybook affiche, et un état oublié dans les histoires est un état non testé. Un absent n'est jamais remplacé par `0` : `null` ou `undefined` donne l'état `empty`, alors qu'un vrai `0` est affiché.
+
+### Le ROI du widget « Film le plus rentable » (règle à valider)
+
+> **Statut : proposition, non validée.** Le ticket DASHBOARD-19 demande que la formule du ROI et les règles d'éligibilité des budgets et des recettes soient **validées et documentées avant l'intégration aux données réelles**, et qu'elles ne soient pas déduites de la capture de la maquette. Ce qui suit est donc une proposition à faire valider, pas une règle établie. L'exemple « 69 667,36 % ROI » des histoires n'est qu'une valeur de démonstration : aucune règle n'en a été déduite.
+
+**Ce qui est établi : le contrat du widget.** `MostProfitableMovieWidget` reçoit un film et son `roi`, **un pourcentage déjà calculé** : 100 signifie que le film a rapporté deux fois son budget, une valeur négative est une perte. Le widget ne calcule pas le ROI, ne classe pas les films et ne décide pas lesquels sont éligibles. Il écrit le ROI avec deux décimales et la virgule française (« 69 667,36 % ROI »). Un ROI inconnu (`null`, `undefined`, `NaN`, infini) ou un film absent donne « Aucune donnée disponible » : un ROI inconnu n'est jamais présenté comme 0 %, alors qu'un vrai ROI de 0 % (le film a juste remboursé son budget) est affiché.
+
+**Ce qui reste à valider : la formule et l'éligibilité.** Proposition :
+
+- formule : ROI (%) = (recettes − budget) ÷ budget × 100 ;
+- éligibilité : budget **et** recettes renseignés et strictement positifs, puisque le modèle de données traite un budget ou des recettes de 0 comme inconnus (voir [docs/dashboard-01-modele-donnees.md](docs/dashboard-01-modele-donnees.md)).
+
+Questions ouvertes, à trancher avant d'utiliser des données réelles :
+
+- faut-il un budget minimal ? Un très petit budget donne un ROI démesuré et tire le classement ;
+- que faire des budgets et recettes en devises ou à des dates différentes (conversion, inflation) ?
+- comment départager deux films au même ROI ?
+- faut-il écarter les films pas encore sortis, dont les recettes sont incomplètes ?
 
 ## Vérifications
 
