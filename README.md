@@ -171,13 +171,14 @@ Le résultat est écrit dans `storybook-static/`, ignoré par git.
 
 Les widgets sont dans `src/front-end/components/`, chacun avec son composant, son style, ses histoires et ses tests. Dans Storybook, ils sont regroupés sous **Widgets**.
 
-| Widget                      | Composant                                       | Ce qu'il montre                                                                  |
-| --------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------- |
-| « Films en base »           | `MoviesCountWidget/MoviesCountWidget.tsx`       | Le nombre de films de la base, avec la période de leurs années de sortie.        |
-| « Durée moyenne »           | `AverageRuntimeWidget/AverageRuntimeWidget.tsx` | La durée moyenne des films, en minutes.                                          |
-| « Note moyenne »            | `AverageRatingWidget/AverageRatingWidget.tsx`   | La note moyenne simple des films, sur 10, avec deux décimales.                   |
-| « Pays le plus représenté » | `TopCountryWidget/TopCountryWidget.tsx`         | Le pays qui apparaît dans le plus de films, avec son nombre de films.            |
-| « Film le mieux noté »      | `TopRatedMovieWidget/TopRatedMovieWidget.tsx`   | Le film le mieux noté, avec son affiche, son titre, son année et sa note sur 10. |
+| Widget                      | Composant                                           | Ce qu'il montre                                                                     |
+| --------------------------- | --------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| « Films en base »           | `MoviesCountWidget/MoviesCountWidget.tsx`           | Le nombre de films de la base, avec la période de leurs années de sortie.           |
+| « Durée moyenne »           | `AverageRuntimeWidget/AverageRuntimeWidget.tsx`     | La durée moyenne des films, en minutes.                                             |
+| « Note moyenne »            | `AverageRatingWidget/AverageRatingWidget.tsx`       | La note moyenne simple des films, sur 10, avec deux décimales.                      |
+| « Pays le plus représenté » | `TopCountryWidget/TopCountryWidget.tsx`             | Le pays qui apparaît dans le plus de films, avec son nombre de films.               |
+| « Film le mieux noté »      | `TopRatedMovieWidget/TopRatedMovieWidget.tsx`       | Le film le mieux noté, avec son affiche, son titre, son année et sa note sur 10.    |
+| « Film le plus populaire »  | `MostPopularMovieWidget/MostPopularMovieWidget.tsx` | Le film le plus populaire, avec son affiche, son titre, son année et sa popularité. |
 
 Tous les widgets s'appuient sur `WidgetCard`, la carte commune : un titre (`h3`), puis le contenu du widget, ou un message ou un espace réservé quand il n'y en a pas. Elle gère les quatre états :
 
