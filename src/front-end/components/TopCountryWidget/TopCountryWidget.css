@@ -1,0 +1,9 @@
+/* The name of the country, which may be long: it wraps instead of being cut */
+.top-country-name {
+  margin: 0;
+  color: var(--heading);
+  font-size: 1.05rem;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
