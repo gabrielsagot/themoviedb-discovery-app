@@ -182,6 +182,7 @@ Les widgets sont dans `src/front-end/components/`, chacun avec son composant, so
 | « Film le plus rentable »   | `MostProfitableMovieWidget/MostProfitableMovieWidget.tsx`   | Le film au meilleur retour sur investissement (ROI), avec son affiche, son titre, son année et son ROI en pourcentage.          |
 | « Film le moins rentable »  | `LeastProfitableMovieWidget/LeastProfitableMovieWidget.tsx` | Le film au plus faible retour sur investissement (ROI), avec son affiche, son titre, son année et son ROI signé en pourcentage. |
 | « Genres représentés »      | `GenresCountWidget/GenresCountWidget.tsx`                   | Le nombre de genres distincts représentés dans le catalogue, avec la mention « Diversité du catalogue ».                        |
+| « Genre dominant »          | `DominantGenreWidget/DominantGenreWidget.tsx`               | Le genre qui apparaît dans le plus de films, avec son nombre de films.                                                          |
 
 Tous les widgets s'appuient sur `WidgetCard`, la carte commune : un titre (`h3`), puis le contenu du widget, ou un message ou un espace réservé quand il n'y en a pas. Elle gère les quatre états :
 

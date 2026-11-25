@@ -1,7 +1,5 @@
-import WidgetCard from '../WidgetCard/WidgetCard';
+import NameCountWidget from '../NameCountWidget/NameCountWidget';
 import type { WidgetDataStatus } from '../WidgetCard/WidgetCard';
-import WidgetValue from '../WidgetValue/WidgetValue';
-import './TopCountryWidget.css';
 
 export interface TopCountryWidgetProps {
   /**
@@ -27,40 +25,22 @@ export interface TopCountryWidgetProps {
   status?: WidgetDataStatus;
 }
 
-// French writes numbers with a space between groups of three digits, but
-// leaves four-digit numbers alone: 1000, then 10 000.
-const countFormat = new Intl.NumberFormat('fr-FR', { useGrouping: 'min2' });
-
 /**
  * The "Pays le plus représenté" widget of the dashboard: the country that
  * appears in the most movies, with the number of movies. A long name wraps
- * on several lines instead of being cut off.
+ * on several lines instead of being cut.
  */
 export default function TopCountryWidget({
   countryName,
   count,
-  status = 'ready',
+  status,
 }: TopCountryWidgetProps) {
-  const label = 'Pays le plus représenté';
-  const name = typeof countryName === 'string' ? countryName.trim() : '';
-  const hasCount =
-    typeof count === 'number' && Number.isInteger(count) && count >= 1;
-
-  if (status !== 'ready') {
-    return <WidgetCard label={label} status={status} />;
-  }
-  if (name === '' || !hasCount) {
-    return <WidgetCard label={label} status="empty" />;
-  }
-
   return (
-    <WidgetCard label={label}>
-      <p className="top-country-name">{name}</p>
-      {/* In French, 1 is singular. */}
-      <WidgetValue
-        value={countFormat.format(count)}
-        unit={count === 1 ? 'film' : 'films'}
-      />
-    </WidgetCard>
+    <NameCountWidget
+      label="Pays le plus représenté"
+      name={countryName}
+      count={count}
+      status={status}
+    />
   );
 }
