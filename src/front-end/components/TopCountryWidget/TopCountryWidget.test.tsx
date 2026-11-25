@@ -107,7 +107,7 @@ describe('TopCountryWidget stories', () => {
     expect(
       screen.getByText("Royaume-Uni de Grande-Bretagne et d'Irlande du Nord")
         .className,
-    ).toBe('top-country-name');
+    ).toBe('widget-name');
     expect(visibleText()).toContain('1234 films');
   });
 

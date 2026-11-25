@@ -1,5 +1,5 @@
-/* The name of the country, which may be long: it wraps instead of being cut */
-.top-country-name {
+/* A name in a widget, which may be long: it wraps instead of being cut */
+.widget-name {
   margin: 0;
   color: var(--heading);
   font-size: 1.05rem;
