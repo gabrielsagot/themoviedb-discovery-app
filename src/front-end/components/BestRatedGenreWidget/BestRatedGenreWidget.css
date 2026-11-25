@@ -1,0 +1,9 @@
+/* "Meilleure note" widget */
+/* The caption says that the rating is a simple average, not a weighted one */
+.best-rated-genre-caption {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
